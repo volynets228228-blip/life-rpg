@@ -1,0 +1,2997 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>День за днём — личный планировщик</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+  <style>
+    :root[data-theme="dark"] {
+      --bg: #202623;
+      --bg-elevated: #292f2b;
+      --bg-card: #303833;
+      --bg-hover: #39423c;
+      --border: #424b44;
+      --text-main: #f0f0e9;
+      --text-muted: #b0b8ae;
+      --accent: #a9bd9b;
+      --accent-hover: #91a783;
+      --accent-soft: rgba(169, 189, 155, 0.16);
+      --gold: #e2bd78;
+      --gold-soft: rgba(226, 189, 120, 0.14);
+      --success: #92b59a;
+      --success-soft: rgba(146, 181, 154, 0.15);
+      --danger: #e58b7e;
+      --shadow: 0 8px 24px rgba(27, 33, 28, 0.12);
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f4f3ee;
+      --bg-elevated: #fbfaf6;
+      --bg-card: #fffefa;
+      --bg-hover: #eeede6;
+      --border: #e3e1d8;
+      --text-main: #30352f;
+      --text-muted: #777d73;
+      --accent: #607c5b;
+      --accent-hover: #4d6948;
+      --accent-soft: #e9eee5;
+      --gold: #a97832;
+      --gold-soft: #f5efdf;
+      --success: #4f7c59;
+      --success-soft: #e8f0e7;
+      --danger: #b65b4c;
+      --shadow: 0 8px 24px rgba(55, 58, 49, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, select, textarea {
+      max-width: 100%;
+    }
+
+    button {
+      overflow-wrap: anywhere;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding-bottom: 4rem;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Цвета тегов категорий */
+    .cat-Быт { background: rgba(56, 189, 248, 0.16); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .cat-Тело { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .cat-Работа { background: rgba(168, 85, 247, 0.16); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .cat-Обучение { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .cat-Проекты { background: rgba(236, 72, 153, 0.16); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .cat-Отдых { background: rgba(99, 102, 241, 0.16); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    /* ВЕРХНЯЯ ПАНЕЛЬ (ХЕДЕР) */
+    .app-header {
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      padding: 1rem 0 0 0;
+      margin-bottom: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .btn-icon {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
+    /* Виджеты баланса и активной цели */
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) 2fr;
+      gap: 0.85rem;
+      margin-bottom: 1.1rem;
+    }
+
+    @media (max-width: 920px) {
+      .hud-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .goal-widget {
+        grid-column: span 3;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .hud-grid {
+        grid-template-columns: 1fr;
+      }
+      .goal-widget {
+        grid-column: span 1;
+      }
+    }
+
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.65rem 0.85rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .stat-box .lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 0;
+    }
+
+    .stat-box .val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      white-space: nowrap;
+    }
+
+    .stat-box.bank {
+      border-color: rgba(245, 158, 11, 0.45);
+      background: var(--gold-soft);
+    }
+
+    .stat-box.bank .val {
+      color: var(--gold);
+    }
+
+    .goal-widget {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.45rem;
+    }
+
+    .goal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      gap: 0.5rem;
+    }
+
+    .goal-title {
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .goal-numbers {
+      font-weight: 700;
+      color: var(--gold);
+      font-size: 0.82rem;
+      flex-shrink: 0;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      width: 0%;
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Навигационные вкладки */
+    .nav-tabs {
+      display: flex;
+      gap: 0.35rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-link {
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      padding: 0.7rem 1.15rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .tab-link:hover {
+      color: var(--text-main);
+    }
+
+    .tab-link.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Экраны */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Панель управления разделом */
+    .section-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 0.9rem 1.2rem;
+      border-radius: 14px;
+    }
+
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .week-label {
+      font-size: 1.05rem;
+      font-weight: 700;
+      min-width: 210px;
+      text-align: center;
+    }
+
+    .week-total-pill {
+      background: var(--gold-soft);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: var(--gold);
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    /* СЕТКА НЕДЕЛИ (7 дней) */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 1rem;
+    }
+
+    .day-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .day-card.is-today {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .day-header {
+      padding: 0.85rem 1rem;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .day-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .day-date-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .day-score {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    .day-tasks {
+      padding: 0.75rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-height: 150px;
+    }
+
+    .quest-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.6rem;
+      padding: 0.6rem 0.7rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+
+    .quest-item:hover {
+      border-color: var(--accent);
+    }
+
+    .quest-item.done {
+      opacity: 0.55;
+      background: transparent;
+    }
+
+    .quest-item.done .quest-title {
+      text-decoration: line-through;
+    }
+
+    .quest-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .quest-checkbox {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--success);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .quest-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .quest-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+
+    .cat-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.12rem 0.45rem;
+      border-radius: 6px;
+      width: fit-content;
+    }
+
+    .quest-right {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-shrink: 0;
+    }
+
+    .task-move-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .task-move-btn {
+      min-height: 28px;
+      padding: 0.25rem 0.45rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .task-move-btn:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
+    }
+
+    .task-date-picker {
+      position: relative;
+      width: 30px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .task-date-picker:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
+    }
+
+    .task-date-picker input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .pts-badge {
+      background: var(--gold-soft);
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 0.76rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .btn-del-mini {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 2px 4px;
+      opacity: 0.6;
+    }
+
+    .btn-del-mini:hover {
+      color: var(--danger);
+      opacity: 1;
+    }
+
+    /* Быстрое добавление задачи в день */
+    .quick-add-form {
+      padding: 0.65rem 0.75rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg-elevated);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .quick-row {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .input-sm, .select-sm {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      border-radius: 8px;
+      padding: 0.42rem 0.6rem;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    .input-sm:focus, .select-sm:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* ВКЛАДКА 2: ПОВТОРЫ (РУТИНЫ) */
+    .spheres-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sphere-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sphere-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .freq-columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .freq-col {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .freq-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .routine-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .routine-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .routine-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .checklist-details {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+    }
+
+    .checklist-details summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-main);
+      user-select: none;
+    }
+
+    .checklist-ul {
+      margin-top: 0.45rem;
+      padding-left: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .routine-actions {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-top: 0.2rem;
+    }
+
+    /* ВКЛАДКА 3: ПОБОЧНЫЕ КВЕСТЫ */
+    .tags-filter-bar {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tag-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.38rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tag-chip.selected {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .sidequests-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+
+    .sq-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.85rem;
+    }
+
+    .sq-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      background: var(--bg-elevated);
+      padding: 0.65rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+
+    .sq-status {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+    }
+    .status-Доступен { background: var(--accent-soft); color: var(--accent); }
+    .status-В_процессе { background: var(--gold-soft); color: var(--gold); }
+    .status-Выполнен { background: var(--success-soft); color: var(--success); }
+
+    /* ВКЛАДКА 4: МАГАЗИН НАГРАД */
+    .rewards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .reward-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      position: relative;
+    }
+
+    .reward-card.is-active-goal {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold);
+    }
+
+    .btn-buy {
+      width: 100%;
+      padding: 0.65rem;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.86rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-buy.can-afford {
+      background: linear-gradient(135deg, var(--gold), #ea580c);
+      color: #fff;
+    }
+
+    .btn-buy.can-afford:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-buy.locked {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Таблица истории покупок */
+    .history-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      overflow-x: auto;
+    }
+
+    .annual-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .annual-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .annual-stat-label {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .annual-stat-value {
+      font-size: 1.45rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .annual-stat-detail {
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      margin-top: 0.35rem;
+    }
+
+    .annual-chart {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .month-column {
+      min-width: 0;
+      min-height: 145px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 0.45rem;
+      padding: 0.65rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .month-values {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .month-bar-track {
+      height: 66px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .month-bar {
+      width: min(24px, 38%);
+      min-height: 3px;
+      border-radius: 4px 4px 0 0;
+      background: var(--accent);
+    }
+
+    .month-bar.spent { background: var(--gold); }
+
+    .month-label {
+      color: var(--text-main);
+      font-size: 0.76rem;
+      text-align: center;
+      text-transform: capitalize;
+    }
+
+    @media (max-width: 720px) {
+      .annual-chart { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 480px) {
+      .annual-chart { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+      .month-column { min-height: 125px; padding: 0.5rem 0.25rem; }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    /* Модальные окна */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Всплывающая анимация очков +XP */
+    .floating-xp {
+      position: fixed;
+      pointer-events: none;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--gold);
+      z-index: 9999;
+      animation: floatUp 0.9s ease-out forwards;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(0.9); }
+      100% { opacity: 0; transform: translateY(-45px) scale(1.15); }
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    body {
+      padding-bottom: 3rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1440px;
+      width: 100%;
+      min-width: 0;
+      padding: 0 1.5rem;
+    }
+
+    .hud-grid, .hud-grid > * {
+      min-width: 0;
+    }
+
+    .header-top > *, .header-controls > *, .section-toolbar > *,
+    .week-nav > *, .quick-row > *, .routine-actions > * {
+      min-width: 0;
+    }
+
+    .week-grid {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
+    }
+
+    .freq-columns {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    }
+
+    .sidequests-grid {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    }
+
+    .rewards-grid {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+    }
+
+    .annual-summary {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+    }
+
+    .day-card, .day-tasks, .quest-item, .quest-left, .quest-content,
+    .quest-right, .routine-card, .sq-card, .reward-card, .modal-box {
+      min-width: 0;
+    }
+
+    .quest-left {
+      overflow-wrap: anywhere;
+    }
+
+    .quest-content, .quest-title {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .quest-right {
+      justify-content: flex-end;
+    }
+
+    .app-header {
+      background: var(--bg-elevated);
+      box-shadow: none;
+      backdrop-filter: blur(8px);
+      margin-bottom: 1.5rem;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      box-shadow: none;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+    }
+
+    .brand span {
+      margin-top: 0.1rem;
+      font-size: 0.8rem;
+    }
+
+    .sync-status {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .sync-status::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 0.4rem;
+      border-radius: 50%;
+      background: var(--gold);
+      vertical-align: 1px;
+    }
+
+    .sync-status[data-status="saved"]::before { background: var(--success); }
+    .sync-status[data-status="error"]::before { background: var(--danger); }
+
+    .btn-icon, .btn-primary, .btn-buy, .tab-link, .sphere-pill, .tag-chip {
+      transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .btn-icon {
+      border-radius: 9px;
+      padding: 0.55rem 0.8rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-radius: 9px;
+      padding: 0.58rem 0.9rem;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .stat-box, .goal-widget, .section-toolbar, .day-card, .freq-col,
+    .sq-card, .reward-card, .history-card {
+      border-radius: 12px;
+      box-shadow: none;
+    }
+
+    .stat-box, .goal-widget {
+      padding: 0.65rem 0.85rem;
+    }
+
+    .stat-box .lbl {
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-box .val {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .stat-box.bank {
+      border-color: var(--border);
+      background: var(--bg-card);
+    }
+
+    .goal-widget { gap: 0.6rem; }
+
+    .progress-fill {
+      background: var(--accent);
+    }
+
+    .nav-tabs {
+      gap: 0.15rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .tab-link {
+      padding: 0.8rem 1rem;
+      border-bottom-width: 2px;
+      font-size: 0.86rem;
+    }
+
+    .tab-link.active { color: var(--accent); }
+
+    .tab-pane.active { animation: none; }
+
+    .section-toolbar {
+      background: var(--bg-elevated);
+      padding: 0.85rem 1rem;
+    }
+
+    .day-card.is-today {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    .day-header { padding: 0.9rem 1rem; }
+    .day-tasks { gap: 0.55rem; }
+
+    .quest-item {
+      border-radius: 9px;
+      padding: 0.65rem;
+    }
+
+    .quest-item.done { opacity: 0.68; }
+
+    .input-sm, .select-sm {
+      min-height: 38px;
+      border-radius: 8px;
+      padding: 0.5rem 0.65rem;
+      font-size: 0.86rem;
+    }
+
+    .input-sm:focus, .select-sm:focus,
+    button:focus-visible, summary:focus-visible {
+      outline: 3px solid var(--accent-soft);
+      outline-offset: 2px;
+      border-color: var(--accent);
+    }
+
+    .sphere-pill, .tag-chip { border-radius: 8px; }
+
+    .freq-col, .sq-card, .reward-card, .history-card {
+      padding: 1rem;
+    }
+
+    .reward-card.is-active-goal {
+      border-color: var(--gold);
+      box-shadow: inset 0 0 0 1px var(--gold);
+    }
+
+    .btn-buy.can-afford {
+      background: var(--accent);
+    }
+
+    .btn-buy.can-afford:hover {
+      background: var(--accent-hover);
+      filter: none;
+    }
+
+    .modal-backdrop { background: rgba(32, 38, 35, 0.55); }
+
+    .modal-box {
+      border-radius: 14px;
+      border-color: var(--border);
+    }
+
+    .cloud-loading main, .cloud-loading .header-controls, .cloud-loading .nav-tabs {
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    @media (max-width: 640px) {
+      body { padding-bottom: 1.5rem; }
+      .container { padding: 0 0.75rem; }
+
+      .app-header {
+        position: relative;
+        margin-bottom: 0.9rem;
+        padding-top: 0.75rem;
+      }
+
+      .header-top {
+        align-items: center;
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .brand { gap: 0.6rem; }
+      .brand-logo { width: 38px; height: 38px; }
+      .brand h1 { font-size: 1.05rem; }
+      .brand span { font-size: 0.74rem; }
+
+      .header-controls {
+        width: 100%;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.5rem;
+      }
+
+      .sync-status {
+        min-width: 0;
+        white-space: normal;
+        align-self: center;
+        font-size: 0.74rem;
+      }
+
+      .header-controls > .btn-icon {
+        justify-content: center;
+        padding: 0.45rem 0.65rem;
+        font-size: 0.78rem;
+      }
+
+      .hud-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .stat-box {
+        grid-template-columns: minmax(0, 1fr);
+        align-content: center;
+        gap: 0.2rem;
+        min-height: 66px;
+        padding: 0.55rem 0.65rem;
+      }
+
+      .stat-box.bank { grid-column: 1 / -1; }
+      .stat-box .lbl { font-size: 0.63rem; }
+      .stat-box .val {
+        min-width: 0;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        font-size: 0.94rem;
+      }
+
+      .goal-widget {
+        grid-column: 1 / -1;
+        padding: 0.65rem 0.75rem;
+      }
+
+      .goal-top {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.78rem;
+      }
+
+      .goal-title {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .goal-numbers { font-size: 0.75rem; }
+
+      .nav-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.35rem;
+        margin: 0;
+        padding: 0.55rem 0 0.65rem;
+        overflow: visible;
+      }
+
+      .tab-link {
+        min-width: 0;
+        min-height: 40px;
+        justify-content: center;
+        padding: 0.45rem 0.35rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.76rem;
+        line-height: 1.25;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .tab-link.active {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+      }
+
+      .tab-link:last-child { grid-column: 1 / -1; }
+
+      .section-toolbar {
+        align-items: stretch;
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+      }
+
+      .section-toolbar > * { width: 100%; }
+
+      .week-nav {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 0.35rem;
+      }
+
+      .week-label {
+        min-width: 0;
+        font-size: 0.82rem;
+      }
+
+      .week-nav .btn-icon {
+        justify-content: center;
+        padding: 0.45rem 0.35rem;
+        font-size: 0.75rem;
+      }
+
+      .week-nav > button:last-child {
+        grid-column: 1 / -1;
+        justify-self: center;
+        min-width: 110px;
+      }
+
+      .week-total-pill {
+        align-self: flex-start;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.76rem;
+      }
+
+      .week-grid, .freq-columns, .sidequests-grid, .rewards-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.7rem;
+      }
+
+      .day-card, .freq-col, .sq-card, .reward-card, .history-card {
+        border-radius: 11px;
+      }
+
+      .day-header { padding: 0.7rem 0.8rem; }
+      .day-tasks { min-height: 0; padding: 0.6rem; gap: 0.45rem; }
+
+      .quest-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.5rem;
+        padding: 0.6rem;
+      }
+
+      .quest-left { width: 100%; gap: 0.5rem; }
+      .quest-title { font-size: 0.84rem; }
+
+      .quest-right {
+        grid-column: 1;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 0.35rem;
+        width: 100%;
+        align-items: center;
+      }
+
+      .pts-badge {
+        justify-self: start;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.4rem;
+      }
+
+      .task-move-actions {
+        justify-content: flex-end;
+        gap: 0.3rem;
+      }
+
+      .task-move-btn { min-height: 34px; padding: 0.35rem 0.55rem; }
+      .task-date-picker { width: 34px; height: 34px; }
+
+      .btn-del-mini {
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 1.1rem;
+      }
+
+      .quick-add-form { padding: 0.6rem; }
+      .quick-add-form > .input-sm { width: 100%; }
+      .quick-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 76px;
+        gap: 0.4rem;
+      }
+      .quick-row .btn-primary { grid-column: 1 / -1; min-height: 40px; }
+
+      .spheres-bar, .tags-filter-bar { gap: 0.35rem; }
+      .sphere-pill, .tag-chip { padding: 0.4rem 0.6rem; font-size: 0.76rem; }
+      .section-toolbar > div[style*="display:flex"] {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.4rem !important;
+      }
+      .section-toolbar > div[style*="display:flex"] button {
+        justify-content: center;
+        min-height: 38px;
+        padding: 0.4rem;
+        font-size: 0.76rem;
+      }
+
+      .freq-col { padding: 0.75rem; gap: 0.6rem; }
+      .routine-card { padding: 0.7rem; }
+      .routine-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.4rem;
+      }
+      .routine-actions .select-sm { min-width: 0; }
+      .routine-actions > .btn-primary {
+        min-height: 38px;
+        padding: 0.4rem 0.55rem;
+        font-size: 0.74rem;
+      }
+
+      .sq-card, .reward-card { padding: 0.8rem; }
+      .sq-meta-grid { grid-template-columns: minmax(0, 1fr); }
+      .sq-meta-grid > div[style*="grid-column"] { grid-column: auto !important; }
+      .sq-card > div:last-child {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.45rem !important;
+      }
+      .sq-card > div:last-child .select-sm,
+      .sq-card > div:last-child .btn-primary {
+        width: 100%;
+        min-height: 40px;
+      }
+
+      .reward-card > div:first-child > div:first-child {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+      .reward-card .btn-icon { white-space: normal; }
+      .btn-buy { min-height: 42px; }
+
+      .annual-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+      .annual-stat { padding: 0.7rem; }
+      .annual-stat-value { font-size: 1.15rem; overflow-wrap: anywhere; }
+      .annual-chart { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem; }
+      .month-column { min-height: 125px; padding: 0.5rem 0.25rem; }
+
+      .history-card { padding: 0.75rem; }
+      th, td { padding: 0.55rem 0.65rem; }
+
+      .modal-backdrop { padding: 0.65rem; }
+      .modal-box {
+        width: 100%;
+        max-height: calc(100dvh - 1.3rem);
+        overflow-y: auto;
+        padding: 1rem;
+      }
+      .modal-box > div[style*="justify-content:flex-end"] {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem !important;
+      }
+      .modal-box > div[style*="justify-content:flex-end"] button {
+        min-height: 40px;
+        padding: 0.45rem;
+        font-size: 0.78rem;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .container { padding: 0 0.6rem; }
+      .goal-top { gap: 0.35rem; }
+      .week-nav { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+      .week-nav .btn-icon { font-size: 0.69rem; }
+      .quest-right { grid-template-columns: minmax(0, 1fr) auto auto; }
+      .annual-summary { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ И БАЛАНС -->
+  <header class="app-header">
+    <div class="container">
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-logo">LR</div>
+          <div>
+            <h1>Life RPG</h1>
+            <span>Планируй неделю. Отмечай сделанное.</span>
+          </div>
+        </div>
+
+        <div class="header-controls">
+          <span class="sync-status" id="sync-status" data-status="local" role="status" aria-live="polite">Сохранение на устройстве</span>
+          <button class="btn-icon" onclick="toggleTheme()" id="theme-btn">Тёмная тема</button>
+        </div>
+      </div>
+
+      <!-- Виджеты баланса и активной цели -->
+      <div class="hud-grid">
+        <div class="stat-box">
+          <span class="lbl">Заработано всего</span>
+          <div class="val">✨ <span id="hud-earned">0</span> <span id="hud-earned-unit">баллов</span></div>
+        </div>
+        <div class="stat-box">
+          <span class="lbl">Потрачено</span>
+          <div class="val">🛍️ <span id="hud-spent">0</span> <span id="hud-spent-unit">баллов</span></div>
+        </div>
+        <div class="stat-box bank">
+          <span class="lbl">В копилке (Баланс)</span>
+          <div class="val">🪙 <span id="hud-balance">0</span> <span id="hud-balance-unit">баллов</span></div>
+        </div>
+
+        <div class="goal-widget">
+          <div class="goal-top">
+            <span class="goal-title">🎯 Коплю на: <span id="hud-goal-name">Не выбрано</span></span>
+            <span class="goal-numbers"><span id="hud-goal-progress-txt">0 / 0 баллов</span> (<span id="hud-goal-pct">0%</span>)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="hud-goal-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Вкладки навигации -->
+      <nav class="nav-tabs">
+        <button class="tab-link active" onclick="switchTab('week', this)">План недели</button>
+        <button class="tab-link" onclick="switchTab('routines', this)">Привычки</button>
+        <button class="tab-link" onclick="switchTab('sidequests', this)">Идеи для досуга</button>
+        <button class="tab-link" onclick="switchTab('shop', this)">Награды</button>
+        <button class="tab-link" onclick="switchTab('year', this)">Итоги года</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ВКЛАДКА 1: ★ НЕДЕЛЯ -->
+    <section id="tab-week" class="tab-pane active">
+      <div class="section-toolbar">
+        <div class="week-nav">
+          <button class="btn-icon" onclick="changeWeek(-1)">← Пред.</button>
+          <div class="week-label" id="week-range-label">Неделя</div>
+          <button class="btn-icon" onclick="changeWeek(1)">След. →</button>
+          <button class="btn-icon" onclick="resetToCurrentWeek()">Сегодня</button>
+        </div>
+        <div class="week-total-pill">
+          Итого за неделю: <span id="week-total-points">0</span> <span id="week-total-unit">баллов</span>
+        </div>
+      </div>
+
+      <div class="week-grid" id="week-grid-container"></div>
+    </section>
+
+    <!-- ВКЛАДКА 2: ПОВТОРЫ (БАЗА РУТИН) -->
+    <section id="tab-routines" class="tab-pane">
+      <div class="section-toolbar">
+        <div class="spheres-bar" id="spheres-bar"></div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn-icon" onclick="addNewSphere()">+ Сфера</button>
+          <button class="btn-primary" onclick="openRoutineModal()">+ Шаблон рутины</button>
+        </div>
+      </div>
+
+      <div class="freq-columns" id="routines-container"></div>
+    </section>
+
+    <!-- ВКЛАДКА 3: ПОБОЧНЫЕ КВЕСТЫ -->
+    <section id="tab-sidequests" class="tab-pane">
+      <div class="section-toolbar">
+        <div class="tags-filter-bar" id="sq-tags-bar"></div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn-icon" onclick="addNewSqTag()">+ Тег</button>
+          <button class="btn-primary" onclick="openSideQuestModal()">+ Побочный квест</button>
+        </div>
+      </div>
+
+      <div class="sidequests-grid" id="sidequests-container"></div>
+    </section>
+
+    <!-- ВКЛАДКА 4: МАГАЗИН НАГРАД И КОПИЛКА -->
+    <section id="tab-shop" class="tab-pane">
+      <div class="section-toolbar">
+        <div>
+          <h2 style="font-size:1.05rem;">Витрина наград и желаний</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Нажмите 🎯, чтобы сделать награду главной целью в шапке</p>
+        </div>
+        <button class="btn-primary" onclick="openRewardModal()">+ Добавить награду</button>
+      </div>
+
+      <div class="rewards-grid" id="rewards-container"></div>
+
+      <div class="history-card">
+        <h3 style="margin-bottom: 1rem; font-size: 1rem;">📜 История покупок</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Дата покупки</th>
+              <th>Название награды</th>
+              <th>Категория</th>
+              <th>Списано баллов</th>
+            </tr>
+          </thead>
+          <tbody id="purchase-history-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-year" class="tab-pane">
+      <div class="section-toolbar">
+        <div>
+          <h2 style="font-size:1.05rem;">Итоги года</h2>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Выполненные задачи и награды по данным планировщика</p>
+        </div>
+        <select id="annual-year-select" class="select-sm" aria-label="Выбрать год" onchange="renderYearlyStats()"></select>
+      </div>
+
+      <div class="annual-summary" id="annual-summary"></div>
+      <div class="history-card" style="margin-bottom:1rem;">
+        <h3 style="margin-bottom:0.8rem; font-size:1rem;">Активность по месяцам</h3>
+        <div id="annual-chart"></div>
+      </div>
+      <div class="history-card">
+        <h3 style="margin-bottom:0.8rem; font-size:1rem;">Чаще всего выполнял в категории</h3>
+        <div id="annual-top-category" style="color:var(--text-muted); font-size:0.9rem;"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- МОДАЛКА: ДОБАВИТЬ ШАБЛОН РУТИНЫ -->
+  <div class="modal-backdrop" id="modal-routine">
+    <div class="modal-box">
+      <h3>Новый шаблон рутины</h3>
+      <div class="form-group">
+        <label>Сфера жизни</label>
+        <select id="rt-sphere" class="select-sm"></select>
+      </div>
+      <div class="form-group">
+        <label>Регулярность</label>
+        <select id="rt-freq" class="select-sm">
+          <option value="Отдельные дела">Отдельные дела</option>
+          <option value="Каждый день">Каждый день</option>
+          <option value="Раз в неделю">Раз в неделю</option>
+          <option value="Раз в 2 недели">Раз в 2 недели</option>
+          <option value="Раз в месяц">Раз в месяц</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Название квеста / рутины</label>
+        <input type="text" id="rt-title" class="input-sm" placeholder="Например: Вечерний разбор кухни" />
+      </div>
+      <div class="form-group">
+        <label>Чек-лист шагов (каждый шаг с новой строки)</label>
+        <textarea id="rt-steps" class="input-sm" rows="3" placeholder="Загрузить посудомойку&#10;Протереть столешницу&#10;Вынести мусор"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Награда в баллах</label>
+        <input type="number" id="rt-points" class="input-sm" value="15" min="1" />
+      </div>
+      <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+        <button class="btn-icon" onclick="closeModals()">Отмена</button>
+        <button class="btn-primary" onclick="saveNewRoutine()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ДОБАВИТЬ ПОБОЧНЫЙ КВЕСТ -->
+  <div class="modal-backdrop" id="modal-sidequest">
+    <div class="modal-box">
+      <h3>Новый побочный квест</h3>
+      <div class="form-group">
+        <label>Описание квеста</label>
+        <input type="text" id="sq-title" class="input-sm" placeholder="Например: Сварить безалкогольный глинтвейн" />
+      </div>
+      <div class="form-group">
+        <label>Теги (через запятую)</label>
+        <input type="text" id="sq-tags" class="input-sm" placeholder="дом, вкусное" />
+      </div>
+      <div class="quick-row">
+        <div class="form-group" style="flex:1;">
+          <label>Оценка времени (ч)</label>
+          <input type="text" id="sq-time" class="input-sm" placeholder="1ч" />
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Затраты (€)</label>
+          <input type="text" id="sq-cost" class="input-sm" placeholder="4,00 €" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Необходимые условия / ингредиенты</label>
+        <input type="text" id="sq-cond" class="input-sm" placeholder="Вишневый сок, корица, апельсин" />
+      </div>
+      <div class="form-group">
+        <label>Награда в баллах</label>
+        <input type="number" id="sq-points" class="input-sm" value="25" min="1" />
+      </div>
+      <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+        <button class="btn-icon" onclick="closeModals()">Отмена</button>
+        <button class="btn-primary" onclick="saveNewSideQuest()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: ДОБАВИТЬ НАГРАДУ В МАГАЗИН -->
+  <div class="modal-backdrop" id="modal-reward">
+    <div class="modal-box">
+      <h3>Новая награда в магазин</h3>
+      <div class="form-group">
+        <label>Категория</label>
+        <input type="text" id="rw-cat" class="input-sm" placeholder="Впечатления / Покупки / Еда" />
+      </div>
+      <div class="form-group">
+        <label>Название награды</label>
+        <input type="text" id="rw-title" class="input-sm" placeholder="Например: Поход в спа или новая игра" />
+      </div>
+      <div class="quick-row">
+        <div class="form-group" style="flex:1;">
+          <label>Стоимость (€), справочно</label>
+          <input type="text" id="rw-money" class="input-sm" placeholder="25,00 €" />
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Цена в баллах</label>
+          <input type="number" id="rw-points" class="input-sm" value="150" min="1" />
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+        <button class="btn-icon" onclick="closeModals()">Отмена</button>
+        <button class="btn-primary" onclick="saveNewReward()">Добавить в витрину</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+  <script>
+    const STORAGE_KEY = "LIFE_RPG_SPA_STATE_V1";
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBJS-3JejJfMu6TJTkYmy6ikGZnaCbbE9A",
+      authDomain: "life-rpg-d50b6.firebaseapp.com",
+      projectId: "life-rpg-d50b6",
+      databaseURL: "https://life-rpg-d50b6-default-rtdb.firebaseio.com",
+      storageBucket: "life-rpg-d50b6.firebasestorage.app",
+      messagingSenderId: "855045577905",
+      appId: "1:855045577905:web:45a5ab5a4d61e21809d690"
+    };
+    const FREQUENCIES = ["Отдельные дела", "Каждый день", "Раз в неделю", "Раз в 2 недели", "Раз в месяц"];
+    const CATEGORIES = ["Быт", "Тело", "Работа", "Обучение", "Проекты", "Отдых"];
+
+    let currentWeekOffset = 0;
+    let activeSphereFilter = "Все";
+    let selectedSqTags = [];
+    let selectedStatsYear = new Date().getFullYear();
+    let cloudDocument = null;
+    let cloudSyncReady = false;
+    let cloudSaveTimer = null;
+    let cloudWriteQueue = Promise.resolve();
+
+    // Формирование дат недели (Понедельник - Воскресенье)
+    function getMondayOfCurrentWeek(offsetWeeks = 0) {
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1) + (offsetWeeks * 7);
+      const monday = new Date(now.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    }
+
+    function toISODate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getDefaultState() {
+      const mon = getMondayOfCurrentWeek(0);
+      const d0 = toISODate(mon);
+      const d1 = toISODate(new Date(mon.getTime() + 86400000 * 1));
+      const d2 = toISODate(new Date(mon.getTime() + 86400000 * 2));
+      const d3 = toISODate(new Date(mon.getTime() + 86400000 * 3));
+
+      return {
+        theme: "dark",
+        uiPreferencesMigrated: true,
+        activeGoalId: "rw-1",
+        spheres: ["Тело", "Быт", "Работа", "Обучение", "Проекты"],
+        sqTags: ["дом", "вкусное", "природа", "социальное", "творчество"],
+        weekTasks: {
+          [d0]: [
+            { id: "t-1", category: "Тело", title: "Утренняя зарядка и стакан воды", points: 10, done: true },
+            { id: "t-2", category: "Работа", title: "Сфокусированный блок работы (Deep Work 90 мин)", points: 25, done: true },
+            { id: "t-3", category: "Быт", title: "Разобрать рабочее место и проветрить", points: 10, done: false }
+          ],
+          [d1]: [
+            { id: "t-4", category: "Обучение", title: "Урок иностранного языка + повторение карточек", points: 20, done: true },
+            { id: "t-5", category: "Тело", title: "Силовая тренировка / 10 000 шагов", points: 25, done: false }
+          ],
+          [d2]: [
+            { id: "t-6", category: "Быт", title: "Закупка продуктов по списку", points: 15, done: false },
+            { id: "t-7", category: "Работа", title: "Закрыть 3 приоритетные задачи спринта", points: 30, done: false }
+          ],
+          [d3]: [
+            { id: "t-8", category: "Тело", title: "Растяжка перед сном 15 минут", points: 10, done: false }
+          ]
+        },
+        routines: [
+          {
+            id: "rt-1",
+            sphere: "Тело",
+            freq: "Каждый день",
+            title: "Утренний ритуал бодрости",
+            steps: ["Выпить стакан теплой воды", "Суставная разминка 7 мин", "Контрастный душ"],
+            points: 15
+          },
+          {
+            id: "rt-2",
+            sphere: "Быт",
+            freq: "Каждый день",
+            title: "Вечерний ресет кухни",
+            steps: ["Загрузить посудомойку", "Протереть стол и плиту", "Вынести мусор"],
+            points: 15
+          },
+          {
+            id: "rt-3",
+            sphere: "Быт",
+            freq: "Раз в неделю",
+            title: "Большая уборка квартиры",
+            steps: ["Пропылесосить все комнаты", "Влажная уборка пола", "Смена постельного белья", "Полить цветы"],
+            points: 40
+          },
+          {
+            id: "rt-4",
+            sphere: "Работа",
+            freq: "Раз в неделю",
+            title: "Еженедельное ревью и план",
+            steps: ["Разобрать входящие в почте и заметках", "Подвести итоги недели", "Распределить квесты на следующую неделю"],
+            points: 25
+          },
+          {
+            id: "rt-5",
+            sphere: "Быт",
+            freq: "Раз в 2 недели",
+            title: "Ревизия холодильника и запасов",
+            steps: ["Проверить сроки годности", "Протереть полки", "Составить список базовых покупок"],
+            points: 20
+          },
+          {
+            id: "rt-6",
+            sphere: "Проекты",
+            freq: "Раз в месяц",
+            title: "Финансовый учет и закрытие месяца",
+            steps: ["Свести доходы и расходы", "Отложить процент в накопления", "Проверить подписки"],
+            points: 35
+          },
+          {
+            id: "rt-7",
+            sphere: "Тело",
+            freq: "Отдельные дела",
+            title: "Записаться на чекап / к стоматологу",
+            steps: ["Выбрать клинику и время", "Позвонить или записаться онлайн"],
+            points: 30
+          }
+        ],
+        sideQuests: [
+          {
+            id: "sq-1",
+            tags: ["дом", "вкусное"],
+            title: "Сделать домашний лимонад с мятой и имбирем",
+            time: "0.5ч",
+            cost: "3,50 €",
+            cond: "Лимоны, свежая мята, лед, газированная вода",
+            points: 20,
+            status: "Доступен"
+          },
+          {
+            id: "sq-2",
+            tags: ["природа"],
+            title: "Прогулка в лесу или парке без телефона",
+            time: "2ч",
+            cost: "0 €",
+            cond: "Хорошая погода, термос с чаем",
+            points: 35,
+            status: "Доступен"
+          },
+          {
+            id: "sq-3",
+            tags: ["социальное", "вкусное"],
+            title: "Выбрать новую кофейню и попробовать фильтр-кофе",
+            time: "1.5ч",
+            cost: "6,00 €",
+            cond: "Свободное утро или полдень",
+            points: 25,
+            status: "В процессе"
+          },
+          {
+            id: "sq-4",
+            tags: ["дом", "творчество"],
+            title: "Вечер настольных игр или сборки лего",
+            time: "2.5ч",
+            cost: "0 €",
+            cond: "Пригласить друзей или включить фоновый плейлист",
+            points: 30,
+            status: "Доступен"
+          }
+        ],
+        rewards: [
+          { id: "rw-1", category: "Впечатления", title: "Поход в СПА / массаж (60 минут)", money: "35,00 €", cost: 150 },
+          { id: "rw-2", category: "Удовольствия", title: "Заказ любимых роллов или пиццы", money: "18,00 €", cost: 80 },
+          { id: "rw-3", category: "Покупки", title: "Новая книга или видеоигра из вишлиста", money: "25,00 €", cost: 120 },
+          { id: "rw-4", category: "Отдых", title: "День полного безделья без чувства вины", money: "0 €", cost: 100 }
+        ],
+        purchases: []
+      };
+    }
+
+    const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    let state = { ...getDefaultState(), ...(savedState || {}) };
+    if (!savedState || !savedState.uiPreferencesMigrated) {
+      state.theme = "dark";
+      state.uiPreferencesMigrated = true;
+    }
+
+    function migrateCurrencyLabels() {
+      let changed = false;
+      const replaceRubles = value => {
+        if (typeof value !== "string" || !value.includes("₽")) return value;
+        changed = true;
+        return value.replace(/\s*₽/g, " €");
+      };
+      state.sideQuests.forEach(quest => { quest.cost = replaceRubles(quest.cost); });
+      state.rewards.forEach(reward => { reward.money = replaceRubles(reward.money); });
+      return changed;
+    }
+
+    if (migrateCurrencyLabels()) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function setSyncStatus(message, status, detail = "") {
+      const indicator = document.getElementById("sync-status");
+      indicator.textContent = message;
+      indicator.dataset.status = status;
+      indicator.title = detail || message;
+    }
+
+    function formatPoints(value) {
+      const points = Math.abs(Number(value) || 0);
+      const lastTwoDigits = points % 100;
+      const lastDigit = points % 10;
+      const unit = lastTwoDigits >= 11 && lastTwoDigits <= 14
+        ? "баллов"
+        : lastDigit === 1
+          ? "балл"
+          : lastDigit >= 2 && lastDigit <= 4
+            ? "балла"
+            : "баллов";
+      return `${value} ${unit}`;
+    }
+
+    function formatCount(value, one, few, many) {
+      const count = Math.abs(Number(value) || 0);
+      const lastTwoDigits = count % 100;
+      const lastDigit = count % 10;
+      const unit = lastTwoDigits >= 11 && lastTwoDigits <= 14
+        ? many
+        : lastDigit === 1
+          ? one
+          : lastDigit >= 2 && lastDigit <= 4
+            ? few
+            : many;
+      return `${value} ${unit}`;
+    }
+
+    function scheduleCloudSave() {
+      if (!cloudSyncReady || !cloudDocument) return;
+      clearTimeout(cloudSaveTimer);
+      setSyncStatus("Сохранение…", "saving");
+      cloudSaveTimer = setTimeout(() => {
+        const stateSnapshot = JSON.parse(JSON.stringify(state));
+        cloudWriteQueue = cloudWriteQueue.then(async () => {
+          await cloudDocument.set({
+            state: stateSnapshot,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+          });
+          setSyncStatus("Сохранено в облаке", "saved");
+        }).catch(error => {
+          console.error("Не удалось сохранить данные в Firebase:", error);
+          setSyncStatus("Ошибка облачного сохранения", "error", error.message);
+        });
+      }, 500);
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      updateHUD();
+      if (cloudSyncReady) scheduleCloudSave();
+    }
+
+    async function initializeFirebase() {
+      const configured = Object.values(FIREBASE_CONFIG).every(value => value.trim());
+      if (!configured) {
+        setSyncStatus("Firebase не настроен · сохранение на устройстве", "local",
+          "Добавьте Web App config в FIREBASE_CONFIG, чтобы включить облачное сохранение.");
+        return;
+      }
+
+      if (!window.firebase) {
+        setSyncStatus("Firebase недоступен · сохранение на устройстве", "error",
+          "Не удалось загрузить Firebase SDK. Проверьте подключение к интернету.");
+        return;
+      }
+
+      document.documentElement.classList.add("cloud-loading");
+      setSyncStatus("Подключение к облаку…", "saving");
+      try {
+        const app = firebase.apps.length
+          ? firebase.app()
+          : firebase.initializeApp(FIREBASE_CONFIG);
+        const credential = await firebase.auth().signInAnonymously();
+        cloudDocument = firebase.database(app)
+          .ref(`users/${credential.user.uid}/appData/life-rpg`);
+
+        const snapshot = await cloudDocument.once("value");
+        if (snapshot.exists()) {
+          const remoteState = snapshot.val().state;
+          if (!remoteState || typeof remoteState !== "object") {
+            throw new Error("В Firebase найден документ с некорректными данными приложения.");
+          }
+          const needsStateUpgrade = !remoteState.uiPreferencesMigrated ||
+            !Array.isArray(remoteState.purchases);
+          state = { ...getDefaultState(), ...remoteState };
+          if (!remoteState.uiPreferencesMigrated) {
+            state.theme = "dark";
+            state.uiPreferencesMigrated = true;
+          }
+          const currencyMigrated = migrateCurrencyLabels();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAll();
+          cloudSyncReady = true;
+          if (currencyMigrated || needsStateUpgrade) {
+            scheduleCloudSave();
+          } else {
+            setSyncStatus("Загружено из облака", "saved");
+          }
+        } else {
+          cloudSyncReady = true;
+          scheduleCloudSave();
+        }
+      } catch (error) {
+        console.error("Не удалось подключиться к Firebase:", error);
+        const statusMessage = error.code === "auth/configuration-not-found" ||
+          error.code === "auth/operation-not-allowed"
+          ? "Включите Firebase Authentication и анонимный вход"
+          : error.code === "PERMISSION_DENIED" || error.code === "database/permission-denied"
+            ? "Проверьте правила доступа Realtime Database"
+            : "Ошибка Firebase · сохранение на устройстве";
+        setSyncStatus(statusMessage, "error", error.message);
+      } finally {
+        document.documentElement.classList.remove("cloud-loading");
+      }
+    }
+
+    // Звуковой синтезатор приятного клика (Web Audio API без внешних файлов)
+    function playCoinSound(isPositive = true) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (isPositive) {
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+          gain.gain.setValueAtTime(0.12, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.28);
+        } else {
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(400, ctx.currentTime);
+          osc.frequency.setValueAtTime(300, ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.1, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
+        }
+      } catch (e) {}
+    }
+
+    function spawnFloatingXP(x, y, points, isPositive) {
+      const el = document.createElement("div");
+      el.className = "floating-xp";
+      el.textContent = isPositive ? `+${formatPoints(points)} ✨` : `-${formatPoints(points)}`;
+      if (!isPositive) el.style.color = "var(--danger)";
+      el.style.left = `${x - 20}px`;
+      el.style.top = `${y - 10}px`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 900);
+    }
+
+    // Расчет заработанных, потраченных и текущих баллов
+    function calculateTotals() {
+      let earned = 0;
+      for (const dayTasks of Object.values(state.weekTasks)) {
+        dayTasks.forEach(t => {
+          if (t.done) earned += Number(t.points) || 0;
+        });
+      }
+      let spent = state.purchases.reduce((acc, p) => acc + (Number(p.cost) || 0), 0);
+      return {
+        earned,
+        spent,
+        balance: earned - spent
+      };
+    }
+
+    function getPurchaseYearMonth(purchase) {
+      const match = String(purchase.date || "").match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+      if (match) return { year: Number(match[3]), month: Number(match[2]) - 1 };
+      const date = new Date(purchase.date);
+      return Number.isNaN(date.getTime())
+        ? null
+        : { year: date.getFullYear(), month: date.getMonth() };
+    }
+
+    function renderYearlyStats() {
+      const select = document.getElementById("annual-year-select");
+      if (select.value) selectedStatsYear = Number(select.value);
+
+      const years = new Set([new Date().getFullYear()]);
+      Object.keys(state.weekTasks || {}).forEach(date => {
+        const year = Number(date.slice(0, 4));
+        if (Number.isInteger(year)) years.add(year);
+      });
+      (state.purchases || []).forEach(purchase => {
+        const date = getPurchaseYearMonth(purchase);
+        if (date) years.add(date.year);
+      });
+
+      const sortedYears = [...years].sort((a, b) => b - a);
+      if (!years.has(selectedStatsYear)) selectedStatsYear = sortedYears[0];
+      select.innerHTML = sortedYears.map(year =>
+        `<option value="${year}">${year}</option>`
+      ).join("");
+      select.value = String(selectedStatsYear);
+
+      const months = Array.from({ length: 12 }, () => ({
+        tasks: 0,
+        completed: 0,
+        earned: 0,
+        spent: 0
+      }));
+      let plannedTasks = 0;
+      let completedTasks = 0;
+      let earned = 0;
+      let activeDays = 0;
+      const activeDates = new Set();
+      const categoryCounts = {};
+
+      Object.entries(state.weekTasks || {}).forEach(([date, tasks]) => {
+        const [yearText, monthText] = date.split("-");
+        if (Number(yearText) !== selectedStatsYear || !Array.isArray(tasks)) return;
+        const month = Number(monthText) - 1;
+        if (month < 0 || month > 11) return;
+
+        tasks.forEach(task => {
+          plannedTasks += 1;
+          months[month].tasks += 1;
+          if (!task.done) return;
+          const points = Number(task.points) || 0;
+          completedTasks += 1;
+          earned += points;
+          months[month].completed += 1;
+          months[month].earned += points;
+          activeDates.add(date);
+          const category = task.category || "Без категории";
+          categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        });
+      });
+      activeDays = activeDates.size;
+
+      let spent = 0;
+      let purchaseCount = 0;
+      (state.purchases || []).forEach(purchase => {
+        const date = getPurchaseYearMonth(purchase);
+        if (!date || date.year !== selectedStatsYear) return;
+        const points = Number(purchase.cost) || 0;
+        spent += points;
+        purchaseCount += 1;
+        months[date.month].spent += points;
+      });
+
+      const completionRate = plannedTasks
+        ? Math.round((completedTasks / plannedTasks) * 100)
+        : 0;
+      const stats = [
+        ["Выполнено задач", completedTasks, `из ${plannedTasks} запланированных · ${completionRate}%`],
+        ["Заработано", formatPoints(earned), "за выполненные задачи"],
+        ["Потрачено", formatPoints(spent), `${formatCount(purchaseCount, "покупка", "покупки", "покупок")}`],
+        ["Остаток", formatPoints(earned - spent), "заработано минус потрачено"],
+        ["Активных дней", activeDays, formatCount(activeDays, "день с выполненной задачей", "дня с выполненными задачами", "дней с выполненными задачами")],
+        ["Покупок наград", purchaseCount, "за выбранный год"]
+      ];
+      document.getElementById("annual-summary").innerHTML = stats.map(([label, value, detail]) => `
+        <article class="annual-stat">
+          <div class="annual-stat-label">${label}</div>
+          <div class="annual-stat-value">${value}</div>
+          <div class="annual-stat-detail">${detail}</div>
+        </article>
+      `).join("");
+
+      const maxMonthly = Math.max(1, ...months.flatMap(month => [month.earned, month.spent]));
+      const monthFormatter = new Intl.DateTimeFormat("ru-RU", { month: "short" });
+      document.getElementById("annual-chart").innerHTML = `
+        <div class="annual-chart">
+          ${months.map((month, index) => {
+            const monthLabel = monthFormatter.format(new Date(selectedStatsYear, index, 1));
+            const earnedHeight = Math.round((month.earned / maxMonthly) * 60);
+            const spentHeight = Math.round((month.spent / maxMonthly) * 60);
+            return `
+              <div class="month-column" title="${monthLabel}: заработано ${formatPoints(month.earned)}, потрачено ${formatPoints(month.spent)}">
+                <div class="month-values">${formatCount(month.completed, "задача", "задачи", "задач")}<br>+${month.earned} / −${month.spent}</div>
+                <div class="month-bar-track" aria-label="${monthLabel}: заработано ${month.earned}, потрачено ${month.spent}">
+                  <div class="month-bar" style="height:${earnedHeight}px"></div>
+                  <div class="month-bar spent" style="height:${spentHeight}px"></div>
+                </div>
+                <div class="month-label">${monthLabel}</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+        <div style="display:flex; gap:1rem; color:var(--text-muted); font-size:0.78rem;">
+          <span><span style="color:var(--accent);">●</span> Заработано</span>
+          <span><span style="color:var(--gold);">●</span> Потрачено</span>
+        </div>
+      `;
+
+      const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
+      document.getElementById("annual-top-category").textContent = topCategory
+        ? `${topCategory[0]} — ${formatCount(topCategory[1], "задача", "задачи", "задач")}`
+        : "Пока нет выполненных задач за этот год.";
+    }
+
+    function updateHUD() {
+      const { earned, spent, balance } = calculateTotals();
+      document.getElementById("hud-earned").textContent = earned;
+      document.getElementById("hud-spent").textContent = spent;
+      document.getElementById("hud-balance").textContent = balance;
+      document.getElementById("hud-earned-unit").textContent = formatPoints(earned).replace(String(earned), "").trim();
+      document.getElementById("hud-spent-unit").textContent = formatPoints(spent).replace(String(spent), "").trim();
+      document.getElementById("hud-balance-unit").textContent = formatPoints(balance).replace(String(balance), "").trim();
+
+      const activeGoal = state.rewards.find(r => r.id === state.activeGoalId) || state.rewards[0];
+      if (activeGoal) {
+        document.getElementById("hud-goal-name").textContent = activeGoal.title;
+        const pct = Math.min(100, Math.max(0, Math.round((balance / activeGoal.cost) * 100)));
+        document.getElementById("hud-goal-progress-txt").textContent = `${formatPoints(balance)} / ${formatPoints(activeGoal.cost)}`;
+        document.getElementById("hud-goal-pct").textContent = `${pct}%`;
+        document.getElementById("hud-goal-bar").style.width = `${pct}%`;
+      } else {
+        document.getElementById("hud-goal-name").textContent = "Цель не выбрана";
+        document.getElementById("hud-goal-progress-txt").textContent = "0 баллов / 0 баллов";
+        document.getElementById("hud-goal-pct").textContent = "0%";
+        document.getElementById("hud-goal-bar").style.width = "0%";
+      }
+    }
+
+    // Переключение вкладок
+    function switchTab(tabId, btn) {
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-link").forEach(b => b.classList.remove("active"));
+      document.getElementById(`tab-${tabId}`).classList.add("active");
+      if (btn) btn.classList.add("active");
+      renderAll();
+    }
+
+    // Тема
+    function applyTheme() {
+      document.documentElement.setAttribute("data-theme", state.theme || "dark");
+      document.getElementById("theme-btn").textContent = state.theme === "light" ? "Тёмная тема" : "Светлая тема";
+    }
+
+    function toggleTheme() {
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      applyTheme();
+      saveState();
+    }
+
+    // ВКЛАДКА 1: РЕНДЕР НЕДЕЛИ
+    function renderWeek() {
+      const monday = getMondayOfCurrentWeek(currentWeekOffset);
+      const sunday = new Date(monday.getTime() + 6 * 86400000);
+      const fmt = { day: "numeric", month: "short" };
+      document.getElementById("week-range-label").textContent =
+        `${monday.toLocaleDateString("ru-RU", fmt)} — ${sunday.toLocaleDateString("ru-RU", fmt)}`;
+
+      const dayNames = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+      const todayISO = toISODate(new Date());
+      const grid = document.getElementById("week-grid-container");
+      grid.innerHTML = "";
+
+      let weekTotal = 0;
+
+      for (let i = 0; i < 7; i++) {
+        const curDate = new Date(monday.getTime() + i * 86400000);
+        const iso = toISODate(curDate);
+        const tasks = state.weekTasks[iso] || [];
+
+        const dayEarned = tasks.reduce((sum, t) => sum + (t.done ? Number(t.points) : 0), 0);
+        weekTotal += dayEarned;
+
+        const card = document.createElement("div");
+        card.className = `day-card ${iso === todayISO ? "is-today" : ""}`;
+        card.dataset.date = iso;
+
+        const tasksHTML = tasks.map(t => `
+          <div class="quest-item ${t.done ? "done" : ""}">
+            <label class="quest-left">
+              <input type="checkbox" class="quest-checkbox" ${t.done ? "checked" : ""}
+                onchange="toggleWeekTask('${iso}', '${t.id}', event)" />
+              <div class="quest-content">
+                <span class="cat-badge cat-${t.category}">${t.category}</span>
+                <span class="quest-title">${t.title}</span>
+              </div>
+            </label>
+            <div class="quest-right">
+              <span class="pts-badge">+${formatPoints(t.points)}</span>
+              <div class="task-move-actions">
+                <button class="task-move-btn" onclick="moveWeekTask('${iso}', '${t.id}', '${toISODate(new Date(new Date(`${iso}T12:00:00`).getTime() + 86400000))}')" title="Перенести на следующий день">Завтра</button>
+                <label class="task-date-picker" title="Перенести на выбранную дату" aria-label="Перенести на выбранную дату">
+                  ↗
+                  <input type="date" aria-label="Выбрать дату для переноса" onchange="moveWeekTask('${iso}', '${t.id}', this.value)" />
+                </label>
+              </div>
+              <button class="btn-del-mini" onclick="deleteWeekTask('${iso}', '${t.id}')" title="Удалить">&times;</button>
+            </div>
+          </div>
+        `).join("");
+
+        const catOptions = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
+
+        card.innerHTML = `
+          <div class="day-header">
+            <div>
+              <div class="day-name">${dayNames[i]} ${iso === todayISO ? "🔥" : ""}</div>
+              <div class="day-date-sub">${curDate.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}</div>
+            </div>
+            <span class="day-score">${formatPoints(dayEarned)}</span>
+          </div>
+          <div class="day-tasks">
+            ${tasksHTML || `<div style="color:var(--text-muted); font-size:0.8rem; margin:auto; text-align:center;">Нет квестов на этот день</div>`}
+          </div>
+          <form class="quick-add-form" onsubmit="addWeekTask(event, '${iso}')">
+            <input type="text" name="title" class="input-sm" placeholder="+ Новый квест на день..." required />
+            <div class="quick-row">
+              <select name="category" class="select-sm" style="flex:1;">${catOptions}</select>
+              <input type="number" name="points" class="input-sm" style="width:72px;" value="15" min="1" title="Баллы" required />
+              <button type="submit" class="btn-primary">Добавить</button>
+            </div>
+          </form>
+        `;
+
+        grid.appendChild(card);
+      }
+
+      document.getElementById("week-total-points").textContent = weekTotal;
+      document.getElementById("week-total-unit").textContent = formatPoints(weekTotal).replace(String(weekTotal), "").trim();
+    }
+
+    function toggleWeekTask(iso, taskId, event) {
+      const list = state.weekTasks[iso] || [];
+      const item = list.find(t => t.id === taskId);
+      if (!item) return;
+
+      item.done = !item.done;
+      playCoinSound(item.done);
+      if (event && event.target) {
+        const rect = event.target.getBoundingClientRect();
+        spawnFloatingXP(rect.left, rect.top, item.points, item.done);
+      }
+      saveState();
+      renderWeek();
+      renderShop();
+    }
+
+    function addWeekTask(e, iso) {
+      e.preventDefault();
+      const form = e.target;
+      const title = form.title.value.trim();
+      const category = form.category.value;
+      const points = parseInt(form.points.value, 10) || 10;
+      if (!title) return;
+
+      if (!state.weekTasks[iso]) state.weekTasks[iso] = [];
+      state.weekTasks[iso].push({
+        id: "t-" + Date.now(),
+        category,
+        title,
+        points,
+        done: false
+      });
+
+      saveState();
+      renderWeek();
+    }
+
+    function deleteWeekTask(iso, taskId) {
+      if (!state.weekTasks[iso]) return;
+      state.weekTasks[iso] = state.weekTasks[iso].filter(t => t.id !== taskId);
+      saveState();
+      renderWeek();
+      renderShop();
+    }
+
+    function moveWeekTask(sourceIso, taskId, targetIso) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(targetIso) || sourceIso === targetIso) return;
+      const sourceTasks = state.weekTasks[sourceIso];
+      if (!Array.isArray(sourceTasks)) return;
+      const taskIndex = sourceTasks.findIndex(task => task.id === taskId);
+      if (taskIndex === -1) return;
+
+      const [task] = sourceTasks.splice(taskIndex, 1);
+      if (!state.weekTasks[targetIso]) state.weekTasks[targetIso] = [];
+      state.weekTasks[targetIso].push(task);
+      if (sourceTasks.length === 0) delete state.weekTasks[sourceIso];
+
+      saveState();
+      renderWeek();
+      renderShop();
+      renderYearlyStats();
+    }
+
+    function changeWeek(delta) {
+      currentWeekOffset += delta;
+      renderWeek();
+    }
+
+    function resetToCurrentWeek() {
+      currentWeekOffset = 0;
+      renderWeek();
+    }
+
+    // ВКЛАДКА 2: ПОВТОРЫ (РУТИНЫ)
+    function renderRoutines() {
+      const spheresBar = document.getElementById("spheres-bar");
+      const allSpheres = ["Все", ...state.spheres];
+      spheresBar.innerHTML = allSpheres.map(sp => `
+        <button class="sphere-pill ${activeSphereFilter === sp ? "active" : ""}"
+          onclick="setSphereFilter('${sp}')">${sp}</button>
+      `).join("");
+
+      // Опции выбора дня текущей недели для копирования
+      const monday = getMondayOfCurrentWeek(currentWeekOffset);
+      const shortDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+      const todayISO = toISODate(new Date());
+      let daySelectOptions = "";
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday.getTime() + i * 86400000);
+        const iso = toISODate(d);
+        daySelectOptions += `<option value="${iso}" ${iso === todayISO ? "selected" : ""}>${shortDays[i]} (${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')})</option>`;
+      }
+
+      const container = document.getElementById("routines-container");
+      container.innerHTML = "";
+
+      FREQUENCIES.forEach(freq => {
+        const filtered = state.routines.filter(r =>
+          r.freq === freq && (activeSphereFilter === "Все" || r.sphere === activeSphereFilter)
+        );
+
+        const col = document.createElement("div");
+        col.className = "freq-col";
+
+        const cardsHTML = filtered.map(rt => `
+          <div class="routine-card">
+            <div class="routine-top">
+              <div>
+                <span class="cat-badge cat-${rt.sphere}">${rt.sphere}</span>
+                <div class="routine-title" style="margin-top:0.3rem;">${rt.title}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.3rem;">
+                <span class="pts-badge">+${formatPoints(rt.points)}</span>
+                <button class="btn-del-mini" onclick="deleteRoutine('${rt.id}')">&times;</button>
+              </div>
+            </div>
+            ${rt.steps && rt.steps.length ? `
+              <details class="checklist-details">
+                <summary>Чек-лист шагов (${rt.steps.length})</summary>
+                <ul class="checklist-ul">
+                  ${rt.steps.map(s => `<li>${s}</li>`).join("")}
+                </ul>
+              </details>
+            ` : ""}
+            <div class="routine-actions">
+              <select id="plan-day-${rt.id}" class="select-sm" style="flex:1;">${daySelectOptions}</select>
+              <button class="btn-primary" onclick="takeRoutineToWeek('${rt.id}', event)">В план недели</button>
+            </div>
+          </div>
+        `).join("");
+
+        col.innerHTML = `
+          <div class="freq-header">
+            <span>${freq}</span>
+            <span style="color:var(--text-muted); font-size:0.8rem;">${filtered.length}</span>
+          </div>
+          ${cardsHTML || `<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding:1rem 0;">Пусто</div>`}
+        `;
+
+        container.appendChild(col);
+      });
+    }
+
+    function setSphereFilter(sp) {
+      activeSphereFilter = sp;
+      renderRoutines();
+    }
+
+    function addNewSphere() {
+      const name = prompt("Введите название новой сферы жизни:");
+      if (!name || !name.trim()) return;
+      const clean = name.trim();
+      if (!state.spheres.includes(clean)) {
+        state.spheres.push(clean);
+        saveState();
+        renderRoutines();
+      }
+    }
+
+    function openRoutineModal() {
+      const sel = document.getElementById("rt-sphere");
+      sel.innerHTML = state.spheres.map(s => `<option value="${s}">${s}</option>`).join("");
+      document.getElementById("modal-routine").classList.add("open");
+    }
+
+    function saveNewRoutine() {
+      const sphere = document.getElementById("rt-sphere").value;
+      const freq = document.getElementById("rt-freq").value;
+      const title = document.getElementById("rt-title").value.trim();
+      const stepsRaw = document.getElementById("rt-steps").value.trim();
+      const points = parseInt(document.getElementById("rt-points").value, 10) || 15;
+
+      if (!title) return;
+      const steps = stepsRaw ? stepsRaw.split("\n").map(s => s.trim()).filter(Boolean) : [];
+
+      state.routines.push({
+        id: "rt-" + Date.now(),
+        sphere,
+        freq,
+        title,
+        steps,
+        points
+      });
+
+      document.getElementById("rt-title").value = "";
+      document.getElementById("rt-steps").value = "";
+      closeModals();
+      saveState();
+      renderRoutines();
+    }
+
+    function deleteRoutine(id) {
+      state.routines = state.routines.filter(r => r.id !== id);
+      saveState();
+      renderRoutines();
+    }
+
+    function takeRoutineToWeek(rtId, event) {
+      const rt = state.routines.find(r => r.id === rtId);
+      if (!rt) return;
+      const targetIso = document.getElementById(`plan-day-${rtId}`).value;
+      if (!state.weekTasks[targetIso]) state.weekTasks[targetIso] = [];
+
+      state.weekTasks[targetIso].push({
+        id: "t-" + Date.now(),
+        category: rt.sphere,
+        title: rt.title,
+        points: rt.points,
+        done: false
+      });
+
+      saveState();
+      const btn = event.target;
+      const oldText = btn.textContent;
+      btn.textContent = "✓ Добавлено!";
+      btn.style.background = "var(--success)";
+      setTimeout(() => {
+        btn.textContent = oldText;
+        btn.style.background = "";
+      }, 1000);
+    }
+
+    // ВКЛАДКА 3: ПОБОЧНЫЕ КВЕСТЫ
+    function renderSideQuests() {
+      const tagsBar = document.getElementById("sq-tags-bar");
+      tagsBar.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted); margin-right:0.3rem;">Фильтр по тегам:</span>` +
+        state.sqTags.map(tag => `
+          <span class="tag-chip ${selectedSqTags.includes(tag) ? "selected" : ""}"
+            onclick="toggleSqTagFilter('${tag}')">#${tag}</span>
+        `).join("") +
+        (selectedSqTags.length ? `<button class="btn-del-mini" onclick="selectedSqTags=[]; renderSideQuests();" style="font-size:0.78rem;">Сбросить</button>` : "");
+
+      const container = document.getElementById("sidequests-container");
+      const filtered = state.sideQuests.filter(sq => {
+        if (selectedSqTags.length === 0) return true;
+        return selectedSqTags.every(t => sq.tags.includes(t));
+      });
+
+      container.innerHTML = filtered.map(sq => {
+        const statusClass = "status-" + sq.status.replace(/\s+/g, "_");
+        return `
+          <div class="sq-card">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                <span class="sq-status ${statusClass}">${sq.status}</span>
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                  <span class="pts-badge">+${formatPoints(sq.points)}</span>
+                  <button class="btn-del-mini" onclick="deleteSideQuest('${sq.id}')">&times;</button>
+                </div>
+              </div>
+              <h3 style="font-size:1rem; margin-bottom:0.5rem;">${sq.title}</h3>
+              <div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                ${sq.tags.map(t => `<span class="tag-chip" style="padding:0.15rem 0.55rem; font-size:0.72rem;">#${t}</span>`).join("")}
+              </div>
+              <div class="sq-meta-grid">
+                <div>⏱ <b>Время:</b> ${sq.time || "—"}</div>
+                <div>💳 <b>Затраты:</b> ${sq.cost || "0 €"}</div>
+                <div style="grid-column: span 2;">🎒 <b>Условия:</b> ${sq.cond || "Нет"}</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <select class="select-sm" onchange="changeSqStatus('${sq.id}', this.value)">
+                <option value="Доступен" ${sq.status === "Доступен" ? "selected" : ""}>Доступен</option>
+                <option value="В процессе" ${sq.status === "В процессе" ? "selected" : ""}>В процессе</option>
+                <option value="Выполнен" ${sq.status === "Выполнен" ? "selected" : ""}>Выполнен</option>
+              </select>
+              <button class="btn-primary" style="flex:1;" onclick="takeSideQuestToday('${sq.id}', event)">Взять этот квест</button>
+            </div>
+          </div>
+        `;
+      }).join("") || `<div style="color:var(--text-muted); padding:2rem;">По выбранным тегам квестов не найдено.</div>`;
+    }
+
+    function toggleSqTagFilter(tag) {
+      if (selectedSqTags.includes(tag)) {
+        selectedSqTags = selectedSqTags.filter(t => t !== tag);
+      } else {
+        selectedSqTags.push(tag);
+      }
+      renderSideQuests();
+    }
+
+    function addNewSqTag() {
+      const t = prompt("Введите новый тег (например: спорт, кино, город):");
+      if (!t || !t.trim()) return;
+      const clean = t.trim().toLowerCase();
+      if (!state.sqTags.includes(clean)) {
+        state.sqTags.push(clean);
+        saveState();
+        renderSideQuests();
+      }
+    }
+
+    function openSideQuestModal() {
+      document.getElementById("modal-sidequest").classList.add("open");
+    }
+
+    function saveNewSideQuest() {
+      const title = document.getElementById("sq-title").value.trim();
+      const tagsRaw = document.getElementById("sq-tags").value.trim();
+      const time = document.getElementById("sq-time").value.trim() || "1ч";
+      const cost = document.getElementById("sq-cost").value.trim() || "0 €";
+      const cond = document.getElementById("sq-cond").value.trim() || "—";
+      const points = parseInt(document.getElementById("sq-points").value, 10) || 20;
+
+      if (!title) return;
+      const tags = tagsRaw ? tagsRaw.split(",").map(s => s.trim().toLowerCase()).filter(Boolean) : ["дом"];
+      tags.forEach(t => {
+        if (!state.sqTags.includes(t)) state.sqTags.push(t);
+      });
+
+      state.sideQuests.push({
+        id: "sq-" + Date.now(),
+        tags,
+        title,
+        time,
+        cost,
+        cond,
+        points,
+        status: "Доступен"
+      });
+
+      document.getElementById("sq-title").value = "";
+      closeModals();
+      saveState();
+      renderSideQuests();
+    }
+
+    function changeSqStatus(id, newStatus) {
+      const item = state.sideQuests.find(q => q.id === id);
+      if (item) {
+        item.status = newStatus;
+        saveState();
+        renderSideQuests();
+      }
+    }
+
+    function deleteSideQuest(id) {
+      state.sideQuests = state.sideQuests.filter(q => q.id !== id);
+      saveState();
+      renderSideQuests();
+    }
+
+    function takeSideQuestToday(id, event) {
+      const sq = state.sideQuests.find(q => q.id === id);
+      if (!sq) return;
+      sq.status = "В процессе";
+      const todayISO = toISODate(new Date());
+      if (!state.weekTasks[todayISO]) state.weekTasks[todayISO] = [];
+
+      state.weekTasks[todayISO].push({
+        id: "t-" + Date.now(),
+        category: "Отдых",
+        title: `[Сайд-квест] ${sq.title}`,
+        points: sq.points,
+        done: false
+      });
+
+      saveState();
+      renderSideQuests();
+      const btn = event.target;
+      btn.textContent = "✓ В плане на сегодня!";
+      setTimeout(() => renderSideQuests(), 1000);
+    }
+
+    // ВКЛАДКА 4: МАГАЗИН НАГРАД И КОПИЛКА
+    function renderShop() {
+      const { balance } = calculateTotals();
+      const container = document.getElementById("rewards-container");
+
+      container.innerHTML = state.rewards.map(rw => {
+        const isGoal = state.activeGoalId === rw.id;
+        const canAfford = balance >= rw.cost;
+        const diff = rw.cost - balance;
+
+        return `
+          <div class="reward-card ${isGoal ? "is-active-goal" : ""}">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <span class="cat-badge cat-Отдых">${rw.category}</span>
+                <div style="display:flex; gap:0.35rem; align-items:center;">
+                  <button class="btn-icon" style="padding:0.25rem 0.5rem; font-size:0.75rem;"
+                    onclick="setGoal('${rw.id}')" title="Сделать главной целью">
+                    ${isGoal ? "🎯 Активная цель" : "🎯 Выбрать целью"}
+                  </button>
+                  <button class="btn-del-mini" onclick="deleteReward('${rw.id}')">&times;</button>
+                </div>
+              </div>
+              <h3 style="font-size:1.05rem; margin-bottom:0.4rem;">${rw.title}</h3>
+              <div style="font-size:0.82rem; color:var(--text-muted);">
+                Справочная цена: <b>${rw.money || "—"}</b>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                <span style="font-size:0.8rem; color:var(--text-muted);">Стоимость награды:</span>
+                <span style="font-size:1.05rem; font-weight:700; color:var(--gold);">🪙 ${formatPoints(rw.cost)}</span>
+              </div>
+              <button class="btn-buy ${canAfford ? "can-afford" : "locked"}"
+                onclick="buyReward('${rw.id}')">
+                ${canAfford ? "🎁 Купить / Наградить себя" : `Не хватает ${formatPoints(diff)}`}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const historyBody = document.getElementById("purchase-history-body");
+      if (state.purchases.length === 0) {
+        historyBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Пока нет совершенных покупок. Выполняйте квесты и радуйте себя!</td></tr>`;
+      } else {
+        historyBody.innerHTML = state.purchases.map(p => `
+          <tr>
+            <td>${p.date}</td>
+            <td><b>${p.title}</b></td>
+            <td>${p.category}</td>
+            <td style="color:var(--gold); font-weight:700;">-${formatPoints(p.cost)}</td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    function setGoal(id) {
+      state.activeGoalId = id;
+      saveState();
+      renderShop();
+    }
+
+    function openRewardModal() {
+      document.getElementById("modal-reward").classList.add("open");
+    }
+
+    function saveNewReward() {
+      const category = document.getElementById("rw-cat").value.trim() || "Желания";
+      const title = document.getElementById("rw-title").value.trim();
+      const money = document.getElementById("rw-money").value.trim() || "0 €";
+      const cost = parseInt(document.getElementById("rw-points").value, 10) || 100;
+
+      if (!title) return;
+      state.rewards.push({
+        id: "rw-" + Date.now(),
+        category,
+        title,
+        money,
+        cost
+      });
+
+      document.getElementById("rw-title").value = "";
+      closeModals();
+      saveState();
+      renderShop();
+    }
+
+    function deleteReward(id) {
+      state.rewards = state.rewards.filter(r => r.id !== id);
+      saveState();
+      renderShop();
+    }
+
+    function buyReward(id) {
+      const rw = state.rewards.find(r => r.id === id);
+      if (!rw) return;
+      const { balance } = calculateTotals();
+      if (balance < rw.cost) return;
+
+      const nowStr = new Date().toLocaleString("ru-RU", {
+        day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+
+      state.purchases.unshift({
+        id: "p-" + Date.now(),
+        date: nowStr,
+        title: rw.title,
+        category: rw.category,
+        cost: rw.cost
+      });
+
+      playCoinSound(true);
+      launchConfetti();
+      saveState();
+      renderShop();
+    }
+
+    function closeModals() {
+      document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+    }
+
+    // Праздничное конфетти при покупке награды
+    function launchConfetti() {
+      const canvas = document.getElementById("confetti-canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const pieces = Array.from({ length: 90 }).map(() => ({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 16,
+        vy: (Math.random() - 0.8) * 16,
+        size: Math.random() * 7 + 4,
+        color: ["#6366f1", "#f59e0b", "#10b981", "#ec4899", "#38bdf8"][Math.floor(Math.random() * 5)],
+        life: 100
+      }));
+
+      function frame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let active = false;
+        pieces.forEach(p => {
+          if (p.life > 0) {
+            active = true;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.35;
+            p.life -= 1.5;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+          }
+        });
+        if (active) requestAnimationFrame(frame);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      frame();
+    }
+
+    function renderAll() {
+      applyTheme();
+      updateHUD();
+      renderWeek();
+      renderRoutines();
+      renderSideQuests();
+      renderShop();
+      renderYearlyStats();
+    }
+
+    renderAll();
+    initializeFirebase();
+  </script>
+</body>
+</html>
