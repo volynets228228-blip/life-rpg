@@ -647,6 +647,46 @@
       white-space: nowrap;
     }
 
+    .task-points-btn {
+      border: 0;
+      font-family: inherit;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .task-points-btn:hover {
+      filter: brightness(1.12);
+    }
+
+    .task-points-edit {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .task-points-edit input {
+      width: 76px;
+      min-width: 0;
+      padding: 0.3rem;
+    }
+
+    .task-points-edit button {
+      min-width: 30px;
+      min-height: 30px;
+      padding: 0.2rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-card);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .task-points-edit .task-points-save {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--bg-main);
+    }
+
     .btn-del-mini {
       background: none;
       border: none;
@@ -2633,7 +2673,12 @@
               </div>
             </label>
             <div class="quest-right">
-              <span class="pts-badge">+${formatPoints(t.points)}</span>
+              <div class="task-points-control">
+                <button type="button" class="pts-badge task-points-btn"
+                  onclick="editWeekTaskPoints('${iso}', '${t.id}')"
+                  title="Изменить баллы за задание"
+                  aria-label="Изменить баллы за задание «${escapeHTML(t.title)}»">+${formatPoints(t.points)}</button>
+              </div>
               <div class="task-move-actions">
                 <button class="task-move-btn" onclick="moveWeekTask('${iso}', '${t.id}', '${toISODate(new Date(new Date(`${iso}T12:00:00`).getTime() + 86400000))}')" title="Перенести на следующий день">Завтра</button>
                 <label class="task-date-picker" title="Перенести на выбранную дату" aria-label="Перенести на выбранную дату">
@@ -2765,6 +2810,46 @@
 
       saveState();
       renderWeek();
+    }
+
+    function editWeekTaskPoints(iso, taskId) {
+      const task = (state.weekTasks[iso] || []).find(item => item.id === taskId);
+      if (!task) return;
+
+      const taskElement = [...document.querySelectorAll(".quest-item")]
+        .find(element => element.dataset.taskId === taskId &&
+          element.closest(".day-card")?.dataset.date === iso);
+      const pointsControl = taskElement?.querySelector(".task-points-control");
+      if (!pointsControl) return;
+
+      pointsControl.innerHTML = `
+        <form class="task-points-edit" onsubmit="saveWeekTaskPoints(event, '${iso}', '${taskId}')">
+          <input type="number" class="input-sm" name="points" value="${Number(task.points) || 0}"
+            min="0" max="9007199254740991" step="1" required
+            aria-label="Баллы за задание" title="Введите целое число от 0 и выше" />
+          <button type="submit" class="task-points-save" aria-label="Сохранить баллы" title="Сохранить">✓</button>
+          <button type="button" onclick="renderWeek()" aria-label="Отменить изменение" title="Отменить">×</button>
+        </form>
+      `;
+      const input = pointsControl.querySelector('input[name="points"]');
+      input?.focus();
+      input?.select();
+    }
+
+    function saveWeekTaskPoints(event, iso, taskId) {
+      event.preventDefault();
+      const task = (state.weekTasks[iso] || []).find(item => item.id === taskId);
+      const input = event.currentTarget.querySelector('input[name="points"]');
+      if (!task || !input || !input.reportValidity()) return;
+
+      const points = input.valueAsNumber;
+      if (!Number.isSafeInteger(points) || points < 0) return;
+
+      task.points = points;
+      saveState();
+      renderWeek();
+      renderShop();
+      renderYearlyStats();
     }
 
     function deleteWeekTask(iso, taskId) {
