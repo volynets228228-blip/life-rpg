@@ -424,9 +424,9 @@
     }
 
     .quest-item {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
       gap: 0.6rem;
       padding: 0.6rem 0.7rem;
       background: var(--bg-elevated);
@@ -452,7 +452,7 @@
       display: flex;
       align-items: flex-start;
       gap: 0.6rem;
-      flex: 1;
+      min-width: 0;
       cursor: pointer;
     }
 
@@ -467,6 +467,8 @@
 
     .quest-content {
       display: flex;
+      flex: 1;
+      min-width: 0;
       flex-direction: column;
       gap: 0.25rem;
     }
@@ -475,6 +477,97 @@
       font-size: 0.88rem;
       font-weight: 500;
       line-height: 1.35;
+    }
+
+    .task-checklist {
+      display: grid;
+      grid-column: 1 / -1;
+      min-width: 0;
+      font-size: 0.8rem;
+    }
+
+    .task-checklist summary {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.38rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-card);
+      color: var(--text-main);
+      cursor: pointer;
+      font-weight: 600;
+      list-style: none;
+      transition: background-color 0.16s ease, border-color 0.16s ease;
+    }
+
+    .task-checklist summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .task-checklist summary::before {
+      content: "+";
+      color: var(--accent);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .task-checklist summary:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+
+    .task-checklist[open] summary {
+      margin-bottom: 0.45rem;
+    }
+
+    .task-checklist[open] summary::before {
+      content: "−";
+    }
+
+    .task-checklist-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .task-checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      min-width: 0;
+      color: var(--text-main);
+      overflow-wrap: anywhere;
+    }
+
+    .task-checklist-item input {
+      margin-top: 0.2rem;
+      accent-color: var(--success);
+      flex-shrink: 0;
+    }
+
+    .task-checklist-item.done span {
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+
+    .task-checklist-add {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.4rem;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .task-checklist-add input {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .task-checklist-add button {
+      flex-shrink: 0;
     }
 
     .cat-badge {
@@ -490,7 +583,7 @@
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      flex-shrink: 0;
+      min-width: 0;
     }
 
     .task-move-actions {
@@ -1011,6 +1104,62 @@
       text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
 
+    .pixel-companion {
+      position: fixed;
+      right: 16px;
+      bottom: 14px;
+      z-index: 80;
+      width: 58px;
+      height: 74px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      image-rendering: pixelated;
+      animation: companion-bob 1.8s steps(2, end) infinite;
+    }
+
+    .pixel-companion:hover {
+      animation: companion-hop 0.45s steps(2, end) infinite;
+    }
+
+    .pixel-companion:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 8px;
+    }
+
+    @keyframes companion-bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @keyframes companion-hop {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-9px); }
+    }
+
+    @media (max-width: 640px) {
+      .task-checklist { grid-column: 1; width: 100%; }
+      .task-checklist-add { grid-template-columns: minmax(0, 1fr) 42px; }
+      .task-checklist-add input { width: 100%; min-width: 0; font-size: 0.86rem; }
+      .task-checklist-add button { min-width: 42px; min-height: 38px; }
+      .quest-item { grid-template-columns: minmax(0, 1fr); }
+      .quest-left { grid-column: 1; width: 100%; }
+      .quest-right { grid-column: 1; width: 100%; }
+      .pixel-companion {
+        right: 8px;
+        bottom: 8px;
+        width: 44px;
+        height: 56px;
+        opacity: 0.92;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pixel-companion { animation: none; }
+    }
+
     @keyframes floatUp {
       0% { opacity: 1; transform: translateY(0) scale(0.9); }
       100% { opacity: 0; transform: translateY(-45px) scale(1.15); }
@@ -1423,14 +1572,9 @@
       .day-header { padding: 0.7rem 0.8rem; }
       .day-tasks { min-height: 0; padding: 0.6rem; gap: 0.45rem; }
 
-      .quest-item {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0.5rem;
-        padding: 0.6rem;
-      }
+      .quest-item { gap: 0.5rem; padding: 0.6rem; }
 
-      .quest-left { width: 100%; gap: 0.5rem; }
+      .quest-left { gap: 0.5rem; }
       .quest-title { font-size: 0.84rem; }
 
       .quest-right {
@@ -1561,6 +1705,38 @@
 <body>
 
   <canvas id="confetti-canvas"></canvas>
+  <button class="pixel-companion" type="button" aria-label="Поздороваться с пиксельным спутником" title="Нажми, чтобы поздороваться">
+    <svg viewBox="0 0 32 40" width="100%" height="100%" shape-rendering="crispEdges" aria-hidden="true">
+      <rect x="6" y="36" width="20" height="2" fill="#101411" opacity=".55"/>
+      <rect x="9" y="32" width="5" height="4" fill="#45352b"/>
+      <rect x="19" y="32" width="5" height="4" fill="#45352b"/>
+      <rect x="8" y="20" width="16" height="13" fill="#52694a"/>
+      <rect x="10" y="22" width="12" height="10" fill="#78946a"/>
+      <rect x="12" y="27" width="8" height="3" fill="#bd914b"/>
+      <rect x="7" y="22" width="3" height="8" fill="#c28b61"/>
+      <rect x="22" y="22" width="3" height="8" fill="#c28b61"/>
+      <rect x="4" y="23" width="4" height="9" fill="#42583d"/>
+      <rect x="24" y="23" width="4" height="9" fill="#42583d"/>
+      <rect x="10" y="9" width="12" height="14" fill="#e4b98e"/>
+      <rect x="9" y="8" width="14" height="6" fill="#513b30"/>
+      <rect x="11" y="5" width="10" height="4" fill="#513b30"/>
+      <rect x="8" y="12" width="3" height="7" fill="#513b30"/>
+      <rect x="21" y="12" width="3" height="7" fill="#513b30"/>
+      <rect x="12" y="14" width="2" height="2" fill="#342a25"/>
+      <rect x="19" y="14" width="2" height="2" fill="#342a25"/>
+      <rect x="15" y="18" width="3" height="1" fill="#9e5d4c"/>
+      <rect x="13" y="21" width="7" height="2" fill="#e8d6a5"/>
+      <rect x="14" y="22" width="5" height="6" fill="#bc914d"/>
+      <rect x="15" y="23" width="3" height="3" fill="#e8c878"/>
+      <rect x="10" y="10" width="4" height="2" fill="#725241"/>
+      <rect x="20" y="10" width="3" height="2" fill="#725241"/>
+      <rect x="7" y="25" width="2" height="4" fill="#d6a67d"/>
+      <rect x="23" y="25" width="2" height="4" fill="#d6a67d"/>
+      <rect x="10" y="33" width="4" height="2" fill="#604837"/>
+      <rect x="19" y="33" width="4" height="2" fill="#604837"/>
+      <rect x="11" y="7" width="9" height="1" fill="#a97a50"/>
+    </svg>
+  </button>
 
   <!-- ВЕРХНЯЯ ПАНЕЛЬ И БАЛАНС -->
   <header class="app-header">
@@ -2175,6 +2351,29 @@
       } catch (e) {}
     }
 
+    function playCompanionSound() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      const context = new AudioContextClass();
+      const now = context.currentTime;
+      [659.25, 783.99, 987.77].forEach((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        const start = now + index * 0.09;
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.045, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(start);
+        oscillator.stop(start + 0.13);
+      });
+      window.setTimeout(() => context.close(), 500);
+    }
+
     function spawnFloatingXP(x, y, points, isPositive) {
       const el = document.createElement("div");
       el.className = "floating-xp";
@@ -2401,8 +2600,30 @@
         card.className = `day-card ${iso === todayISO ? "is-today" : ""}`;
         card.dataset.date = iso;
 
-        const tasksHTML = tasks.map(t => `
-          <div class="quest-item ${t.done ? "done" : ""}">
+        const tasksHTML = tasks.map(t => {
+          const checklist = Array.isArray(t.checklist) ? t.checklist : [];
+          const completedItems = checklist.filter(item => item.done).length;
+          const checklistHTML = `
+            <details class="task-checklist">
+              <summary>${checklist.length ? `Список · ${completedItems}/${checklist.length}` : "Добавить список"}</summary>
+              <div class="task-checklist-list">
+                ${checklist.map((item, index) => `
+                  <label class="task-checklist-item ${item.done ? "done" : ""}">
+                    <input type="checkbox" ${item.done ? "checked" : ""}
+                      onchange="toggleTaskChecklist('${iso}', '${t.id}', ${index})" />
+                    <span>${escapeHTML(item.text)}</span>
+                  </label>
+                `).join("")}
+              </div>
+              <form class="task-checklist-add" onsubmit="addTaskChecklistItem(event, '${iso}', '${t.id}')">
+                <input type="text" name="item" class="input-sm" placeholder="Добавить пункт..." required />
+                <button type="submit" class="btn-primary" aria-label="Добавить пункт списка">+</button>
+              </form>
+            </details>
+          `;
+
+          return `
+          <div class="quest-item ${t.done ? "done" : ""}" data-task-id="${escapeHTML(t.id)}">
             <label class="quest-left">
               <input type="checkbox" class="quest-checkbox" ${t.done ? "checked" : ""}
                 onchange="toggleWeekTask('${iso}', '${t.id}', event)" />
@@ -2422,8 +2643,10 @@
               </div>
               <button class="btn-del-mini" onclick="deleteWeekTask('${iso}', '${t.id}')" title="Удалить">&times;</button>
             </div>
+            ${checklistHTML}
           </div>
-        `).join("");
+        `;
+        }).join("");
 
         const catOptions = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("");
 
@@ -2469,6 +2692,58 @@
       saveState();
       renderWeek();
       renderShop();
+    }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function toggleTaskChecklist(iso, taskId, itemIndex) {
+      const task = (state.weekTasks[iso] || []).find(item => item.id === taskId);
+      if (!task || !Array.isArray(task.checklist) || !task.checklist[itemIndex]) return;
+      task.checklist[itemIndex].done = !task.checklist[itemIndex].done;
+      saveState();
+      const taskElement = [...document.querySelectorAll(".quest-item")]
+        .find(element => element.dataset.taskId === taskId &&
+          element.closest(".day-card")?.dataset.date === iso);
+      if (taskElement) {
+        const checklist = taskElement.querySelector(".task-checklist");
+        if (checklist) {
+          const itemElement = checklist.querySelectorAll(".task-checklist-item")[itemIndex];
+          const completedItems = task.checklist.filter(item => item.done).length;
+          checklist.open = true;
+          checklist.querySelector("summary").textContent =
+            `Список · ${completedItems}/${task.checklist.length}`;
+          itemElement?.classList.toggle("done", task.checklist[itemIndex].done);
+        }
+      }
+    }
+
+    function addTaskChecklistItem(event, iso, taskId) {
+      event.preventDefault();
+      const task = (state.weekTasks[iso] || []).find(item => item.id === taskId);
+      const input = event.currentTarget.querySelector('input[name="item"]');
+      if (!input) return;
+      const text = input.value.trim();
+      if (!task || !text) return;
+      if (!Array.isArray(task.checklist)) task.checklist = [];
+      task.checklist.push({ text, done: false });
+      saveState();
+      renderWeek();
+      const taskElement = [...document.querySelectorAll(".quest-item")]
+        .find(element => element.dataset.taskId === taskId &&
+          element.closest(".day-card")?.dataset.date === iso);
+      const checklist = taskElement?.querySelector(".task-checklist");
+      if (checklist) {
+        checklist.open = true;
+        checklist.querySelector("input[name='item']")?.focus();
+      }
     }
 
     function addWeekTask(e, iso) {
@@ -2990,6 +3265,7 @@
       renderYearlyStats();
     }
 
+    document.querySelector(".pixel-companion").addEventListener("click", playCompanionSound);
     renderAll();
     initializeFirebase();
   </script>
