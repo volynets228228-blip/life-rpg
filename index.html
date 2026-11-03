@@ -1403,6 +1403,18 @@
     .sync-status[data-status="saved"]::before { background: var(--success); }
     .sync-status[data-status="error"]::before { background: var(--danger); }
 
+    .account-modal-message {
+      margin-bottom: 0.9rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .account-modal-error {
+      min-height: 1.25rem;
+      color: var(--danger);
+      font-size: 0.8rem;
+    }
+
     .btn-icon, .btn-primary, .btn-buy, .tab-link, .sphere-pill, .tag-chip {
       transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
     }
@@ -1556,11 +1568,12 @@
       .header-controls {
         width: 100%;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto auto;
         gap: 0.5rem;
       }
 
       .sync-status {
+        grid-column: 1 / -1;
         min-width: 0;
         white-space: normal;
         align-self: center;
@@ -1571,6 +1584,15 @@
         justify-content: center;
         padding: 0.45rem 0.65rem;
         font-size: 0.78rem;
+      }
+
+      #account-btn {
+        grid-column: 1 / 3;
+      }
+
+      #theme-btn {
+        grid-column: 3;
+        grid-row: 2;
       }
 
       .hud-grid {
@@ -1877,6 +1899,7 @@
 
         <div class="header-controls">
           <span class="sync-status" id="sync-status" data-status="local" role="status" aria-live="polite">Сохранение на устройстве</span>
+          <button class="btn-icon" id="account-btn" onclick="openAccountModal()">Вход / синхронизация</button>
           <button class="btn-icon" onclick="toggleTheme()" id="theme-btn">Тёмная тема</button>
         </div>
       </div>
@@ -2014,6 +2037,31 @@
 
   </main>
 
+  <div class="modal-backdrop" id="modal-account">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
+      <h3 id="account-modal-title">Синхронизация устройств</h3>
+      <p class="account-modal-message" id="account-modal-message">
+        Создайте аккаунт на компьютере, чтобы привязать к нему текущие данные. На телефоне войдите в этот же аккаунт.
+      </p>
+      <div class="form-group">
+        <label for="account-email">Электронная почта</label>
+        <input type="email" id="account-email" class="input-sm" autocomplete="email"
+          placeholder="name@example.com" />
+      </div>
+      <div class="form-group">
+        <label for="account-password">Пароль</label>
+        <input type="password" id="account-password" class="input-sm" autocomplete="current-password"
+          minlength="6" placeholder="Не менее 6 символов" />
+      </div>
+      <p class="account-modal-error" id="account-modal-error" role="alert" aria-live="polite"></p>
+      <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+        <button class="btn-icon" type="button" onclick="closeModals()">Закрыть</button>
+        <button class="btn-icon" id="account-login-btn" type="button" onclick="signInAccount()">Войти</button>
+        <button class="btn-primary" id="account-create-btn" type="button" onclick="createAccount()">Создать и сохранить данные</button>
+      </div>
+    </div>
+  </div>
+
   <!-- МОДАЛКА: ДОБАВИТЬ ШАБЛОН РУТИНЫ -->
   <div class="modal-backdrop" id="modal-routine">
     <div class="modal-box">
@@ -2141,6 +2189,7 @@
     let selectedStatsYear = new Date().getFullYear();
     let cloudDocument = null;
     let cloudSyncReady = false;
+    let activeFirebaseUser = null;
     let cloudSaveTimer = null;
     let cloudWriteQueue = Promise.resolve();
 
@@ -2299,6 +2348,60 @@
       indicator.title = detail || message;
     }
 
+    function updateAccountControls(user = activeFirebaseUser) {
+      const button = document.getElementById("account-btn");
+      const isAccount = user && !user.isAnonymous;
+      button.textContent = isAccount ? user.email || "Аккаунт подключён" : "Вход / синхронизация";
+      button.title = isAccount
+        ? "Аккаунт синхронизируется на этом устройстве"
+        : "Войдите на другом устройстве или привяжите текущие данные";
+    }
+
+    function openAccountModal() {
+      const user = activeFirebaseUser;
+      const isAccount = user && !user.isAnonymous;
+      document.getElementById("account-modal-message").textContent = isAccount
+        ? `Вы вошли как ${user.email || "пользователь"}. Сохранение синхронизируется между устройствами. Вход останется активным после обновления сайта.`
+        : "Создайте аккаунт на компьютере, чтобы привязать к нему текущие данные. На телефоне войдите в этот же аккаунт.";
+      document.getElementById("account-modal-error").textContent = "";
+      document.getElementById("account-email").value = isAccount ? user.email || "" : "";
+      document.getElementById("account-password").value = "";
+      document.getElementById("account-password").autocomplete = isAccount ? "current-password" : "new-password";
+      document.getElementById("account-create-btn").hidden = Boolean(isAccount);
+      document.getElementById("account-login-btn").hidden = Boolean(isAccount);
+      document.getElementById("modal-account").classList.add("open");
+    }
+
+    function setAccountBusy(isBusy) {
+      document.getElementById("account-login-btn").disabled = isBusy;
+      document.getElementById("account-create-btn").disabled = isBusy;
+      document.getElementById("account-email").disabled = isBusy;
+      document.getElementById("account-password").disabled = isBusy;
+    }
+
+    function getAccountCredentials() {
+      const email = document.getElementById("account-email").value.trim();
+      const password = document.getElementById("account-password").value;
+      if (!email || !document.getElementById("account-email").reportValidity()) {
+        return null;
+      }
+      if (!password || !document.getElementById("account-password").reportValidity()) {
+        return null;
+      }
+      return { email, password };
+    }
+
+    function hasLocalUserData() {
+      const hasTasks = Object.values(state.weekTasks).some(tasks =>
+        Array.isArray(tasks) && tasks.length > 0
+      );
+      return hasTasks || state.routines.length > 0 || state.sideQuests.length > 0 ||
+        state.rewards.length > 0 || state.purchases.length > 0 ||
+        Boolean(state.activeGoalId) ||
+        JSON.stringify(state.spheres) !== JSON.stringify(getDefaultState().spheres) ||
+        JSON.stringify(state.sqTags) !== JSON.stringify(getDefaultState().sqTags);
+    }
+
     function formatPoints(value) {
       const points = Math.abs(Number(value) || 0);
       const lastTwoDigits = points % 100;
@@ -2330,11 +2433,12 @@
     function scheduleCloudSave() {
       if (!cloudSyncReady || !cloudDocument) return;
       clearTimeout(cloudSaveTimer);
+      const documentRef = cloudDocument;
+      const stateSnapshot = JSON.parse(JSON.stringify(state));
       setSyncStatus("Сохранение…", "saving");
       cloudSaveTimer = setTimeout(() => {
-        const stateSnapshot = JSON.parse(JSON.stringify(state));
         cloudWriteQueue = cloudWriteQueue.then(async () => {
-          await cloudDocument.set({
+          await documentRef.set({
             state: stateSnapshot,
             updatedAt: firebase.database.ServerValue.TIMESTAMP
           });
@@ -2350,6 +2454,160 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       updateHUD();
       if (cloudSyncReady) scheduleCloudSave();
+    }
+
+    async function connectFirebaseUser(user) {
+      document.documentElement.classList.add("cloud-loading");
+      setSyncStatus("Подключение к облаку…", "saving");
+      cloudSyncReady = false;
+      try {
+        const app = firebase.apps.length
+          ? firebase.app()
+          : firebase.initializeApp(FIREBASE_CONFIG);
+        const userDocument = firebase.database(app)
+          .ref(`users/${user.uid}/appData/life-rpg`);
+
+        const snapshot = await userDocument.once("value");
+        if (snapshot.exists()) {
+          const remoteState = snapshot.val().state;
+          if (!remoteState || typeof remoteState !== "object") {
+            throw new Error("В Firebase найден документ с некорректными данными приложения.");
+          }
+          state = { ...getDefaultState(), ...remoteState };
+          if (!remoteState.uiPreferencesMigrated) {
+            state.theme = "dark";
+            state.uiPreferencesMigrated = true;
+          }
+          const bundledExamplesRemoved = removeUnmodifiedBundledExamples();
+          const routineTasksLinked = linkLegacyRoutineTasks();
+          const needsStateUpgrade = !remoteState.uiPreferencesMigrated ||
+            !Array.isArray(remoteState.purchases) || routineTasksLinked ||
+            bundledExamplesRemoved;
+          const currencyMigrated = migrateCurrencyLabels();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          cloudDocument = userDocument;
+          renderAll();
+          cloudSyncReady = true;
+          if (currencyMigrated || needsStateUpgrade) {
+            scheduleCloudSave();
+          } else {
+            setSyncStatus("Загружено из облака", "saved");
+          }
+        } else {
+          cloudDocument = userDocument;
+          cloudSyncReady = true;
+          scheduleCloudSave();
+        }
+        activeFirebaseUser = user;
+        updateAccountControls(user);
+      } catch (error) {
+        throw error;
+      } finally {
+        document.documentElement.classList.remove("cloud-loading");
+      }
+    }
+
+    function getAccountErrorMessage(error) {
+      switch (error.code) {
+        case "auth/email-already-in-use":
+        case "auth/credential-already-in-use":
+          return "Этот адрес уже зарегистрирован. Нажмите «Войти». Текущие данные на устройстве не изменены.";
+        case "auth/invalid-email":
+          return "Проверьте адрес электронной почты.";
+        case "auth/weak-password":
+          return "Пароль должен содержать не менее 6 символов.";
+        case "auth/invalid-credential":
+        case "auth/invalid-login-credentials":
+        case "auth/wrong-password":
+        case "auth/user-not-found":
+          return "Не удалось войти. Проверьте почту и пароль.";
+        case "auth/operation-not-allowed":
+          return "В Firebase Console нужно включить способ входа «Электронная почта/пароль».";
+        case "PERMISSION_DENIED":
+        case "database/permission-denied":
+          return "Firebase отклонил доступ. Проверьте правила Realtime Database.";
+        default:
+          return error.message || "Не удалось подключиться к аккаунту.";
+      }
+    }
+
+    async function createAccount() {
+      const credentials = getAccountCredentials();
+      if (!credentials) return;
+      const auth = firebase.auth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        document.getElementById("account-modal-error").textContent =
+          "Сначала дождитесь подключения к Firebase и повторите попытку.";
+        return;
+      }
+      if (!currentUser.isAnonymous) {
+        document.getElementById("account-modal-error").textContent =
+          "На этом устройстве уже подключён аккаунт. Для входа используйте кнопку «Войти».";
+        return;
+      }
+
+      setAccountBusy(true);
+      document.getElementById("account-modal-error").textContent = "";
+      try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const credential = firebase.auth.EmailAuthProvider.credential(
+          credentials.email,
+          credentials.password
+        );
+        const result = await currentUser.linkWithCredential(credential);
+        activeFirebaseUser = result.user;
+        updateAccountControls(result.user);
+        await connectFirebaseUser(result.user);
+        document.getElementById("account-password").value = "";
+        document.getElementById("account-modal-message").textContent =
+          "Аккаунт создан, и текущие данные привязаны к нему. Теперь войдите в этот аккаунт на телефоне.";
+        document.getElementById("account-modal-error").textContent = "";
+        document.getElementById("account-create-btn").hidden = true;
+        document.getElementById("account-login-btn").hidden = true;
+        document.getElementById("account-email").disabled = true;
+        document.getElementById("account-password").disabled = true;
+      } catch (error) {
+        console.error("Не удалось создать или привязать аккаунт:", error);
+        document.getElementById("account-modal-error").textContent = getAccountErrorMessage(error);
+      } finally {
+        setAccountBusy(false);
+        if (activeFirebaseUser && !activeFirebaseUser.isAnonymous) {
+          document.getElementById("account-email").disabled = true;
+          document.getElementById("account-password").disabled = true;
+          document.getElementById("account-create-btn").hidden = true;
+          document.getElementById("account-login-btn").hidden = true;
+        }
+      }
+    }
+
+    async function signInAccount() {
+      const credentials = getAccountCredentials();
+      if (!credentials) return;
+      const auth = firebase.auth();
+      if (auth.currentUser?.isAnonymous && hasLocalUserData()) {
+        document.getElementById("account-modal-error").textContent =
+          "На этом устройстве есть отдельные данные. Чтобы их сохранить, создайте аккаунт здесь кнопкой «Создать и сохранить данные» — вход привяжет текущий профиль. На другом устройстве нажмите «Войти».";
+        return;
+      }
+
+      setAccountBusy(true);
+      document.getElementById("account-modal-error").textContent = "";
+      try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const result = await auth.signInWithEmailAndPassword(
+          credentials.email,
+          credentials.password
+        );
+        await connectFirebaseUser(result.user);
+        closeModals();
+        document.getElementById("account-password").value = "";
+      } catch (error) {
+        console.error("Не удалось войти в аккаунт:", error);
+        document.getElementById("account-modal-error").textContent = getAccountErrorMessage(error);
+      } finally {
+        setAccountBusy(false);
+      }
     }
 
     async function initializeFirebase() {
@@ -2372,41 +2630,13 @@
         const app = firebase.apps.length
           ? firebase.app()
           : firebase.initializeApp(FIREBASE_CONFIG);
-        const credential = await firebase.auth().signInAnonymously();
-        cloudDocument = firebase.database(app)
-          .ref(`users/${credential.user.uid}/appData/life-rpg`);
-
-        const snapshot = await cloudDocument.once("value");
-        if (snapshot.exists()) {
-          const remoteState = snapshot.val().state;
-          if (!remoteState || typeof remoteState !== "object") {
-            throw new Error("В Firebase найден документ с некорректными данными приложения.");
-          }
-          state = { ...getDefaultState(), ...remoteState };
-          if (!remoteState.uiPreferencesMigrated) {
-            state.theme = "dark";
-            state.uiPreferencesMigrated = true;
-          }
-          const bundledExamplesRemoved = removeUnmodifiedBundledExamples();
-          const routineTasksLinked = linkLegacyRoutineTasks();
-          const needsStateUpgrade = !remoteState.uiPreferencesMigrated ||
-            !Array.isArray(remoteState.purchases) || routineTasksLinked ||
-            bundledExamplesRemoved;
-          const currencyMigrated = migrateCurrencyLabels();
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-          renderAll();
-          cloudSyncReady = true;
-          if (currencyMigrated || needsStateUpgrade) {
-            scheduleCloudSave();
-          } else {
-            setSyncStatus("Загружено из облака", "saved");
-          }
-        } else {
-          cloudSyncReady = true;
-          scheduleCloudSave();
-        }
+        const auth = firebase.auth();
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const user = auth.currentUser || (await auth.signInAnonymously()).user;
+        await connectFirebaseUser(user);
       } catch (error) {
         console.error("Не удалось подключиться к Firebase:", error);
+        cloudSyncReady = false;
         const statusMessage = error.code === "auth/configuration-not-found" ||
           error.code === "auth/operation-not-allowed"
           ? "Включите Firebase Authentication и анонимный вход"
@@ -2414,8 +2644,6 @@
             ? "Проверьте правила доступа Realtime Database"
             : "Ошибка Firebase · сохранение на устройстве";
         setSyncStatus(statusMessage, "error", error.message);
-      } finally {
-        document.documentElement.classList.remove("cloud-loading");
       }
     }
 
