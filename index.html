@@ -810,6 +810,89 @@
       gap: 0.6rem;
     }
 
+    .routine-overview {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .routine-overview-card {
+      padding: 0.85rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .routine-overview-value {
+      color: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 750;
+    }
+
+    .routine-overview-label {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    .routine-progress {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .routine-progress span {
+      padding: 0.2rem 0.5rem;
+      background: var(--bg-card);
+      border-radius: 999px;
+    }
+
+    .routine-days {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+
+    .routine-day-btn {
+      min-width: 38px;
+      min-height: 34px;
+      padding: 0.25rem 0.45rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font: inherit;
+      font-size: 0.72rem;
+      cursor: pointer;
+    }
+
+    .routine-day-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .routine-day-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .routine-points-control {
+      display: flex;
+      align-items: center;
+    }
+
+    .routine-empty {
+      padding: 1.25rem;
+      color: var(--text-muted);
+      text-align: center;
+      background: var(--bg-card);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+    }
+
     .routine-top {
       display: flex;
       justify-content: space-between;
@@ -1671,9 +1754,11 @@
 
       .freq-col { padding: 0.75rem; gap: 0.6rem; }
       .routine-card { padding: 0.7rem; }
+      .routine-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+      .routine-overview-card { padding: 0.7rem; }
       .routine-actions {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr);
         gap: 0.4rem;
       }
       .routine-actions .select-sm { min-width: 0; }
@@ -1862,6 +1947,7 @@
         </div>
       </div>
 
+      <div class="routine-overview" id="routine-overview"></div>
       <div class="freq-columns" id="routines-container"></div>
     </section>
 
@@ -1942,6 +2028,7 @@
           <option value="Отдельные дела">Отдельные дела</option>
           <option value="Каждый день">Каждый день</option>
           <option value="Раз в неделю">Раз в неделю</option>
+          <option value="3 раза в неделю">3 раза в неделю</option>
           <option value="Раз в 2 недели">Раз в 2 недели</option>
           <option value="Раз в месяц">Раз в месяц</option>
         </select>
@@ -2045,7 +2132,7 @@
       messagingSenderId: "855045577905",
       appId: "1:855045577905:web:45a5ab5a4d61e21809d690"
     };
-    const FREQUENCIES = ["Отдельные дела", "Каждый день", "Раз в неделю", "Раз в 2 недели", "Раз в месяц"];
+    const FREQUENCIES = ["Отдельные дела", "Каждый день", "Раз в неделю", "3 раза в неделю", "Раз в 2 недели", "Раз в месяц"];
     const CATEGORIES = ["Быт", "Тело", "Работа", "Обучение", "Проекты", "Отдых"];
 
     let currentWeekOffset = 0;
@@ -2075,142 +2162,16 @@
     }
 
     function getDefaultState() {
-      const mon = getMondayOfCurrentWeek(0);
-      const d0 = toISODate(mon);
-      const d1 = toISODate(new Date(mon.getTime() + 86400000 * 1));
-      const d2 = toISODate(new Date(mon.getTime() + 86400000 * 2));
-      const d3 = toISODate(new Date(mon.getTime() + 86400000 * 3));
-
       return {
         theme: "dark",
         uiPreferencesMigrated: true,
-        activeGoalId: "rw-1",
+        activeGoalId: null,
         spheres: ["Тело", "Быт", "Работа", "Обучение", "Проекты"],
         sqTags: ["дом", "вкусное", "природа", "социальное", "творчество"],
-        weekTasks: {
-          [d0]: [
-            { id: "t-1", category: "Тело", title: "Утренняя зарядка и стакан воды", points: 10, done: true },
-            { id: "t-2", category: "Работа", title: "Сфокусированный блок работы (Deep Work 90 мин)", points: 25, done: true },
-            { id: "t-3", category: "Быт", title: "Разобрать рабочее место и проветрить", points: 10, done: false }
-          ],
-          [d1]: [
-            { id: "t-4", category: "Обучение", title: "Урок иностранного языка + повторение карточек", points: 20, done: true },
-            { id: "t-5", category: "Тело", title: "Силовая тренировка / 10 000 шагов", points: 25, done: false }
-          ],
-          [d2]: [
-            { id: "t-6", category: "Быт", title: "Закупка продуктов по списку", points: 15, done: false },
-            { id: "t-7", category: "Работа", title: "Закрыть 3 приоритетные задачи спринта", points: 30, done: false }
-          ],
-          [d3]: [
-            { id: "t-8", category: "Тело", title: "Растяжка перед сном 15 минут", points: 10, done: false }
-          ]
-        },
-        routines: [
-          {
-            id: "rt-1",
-            sphere: "Тело",
-            freq: "Каждый день",
-            title: "Утренний ритуал бодрости",
-            steps: ["Выпить стакан теплой воды", "Суставная разминка 7 мин", "Контрастный душ"],
-            points: 15
-          },
-          {
-            id: "rt-2",
-            sphere: "Быт",
-            freq: "Каждый день",
-            title: "Вечерний ресет кухни",
-            steps: ["Загрузить посудомойку", "Протереть стол и плиту", "Вынести мусор"],
-            points: 15
-          },
-          {
-            id: "rt-3",
-            sphere: "Быт",
-            freq: "Раз в неделю",
-            title: "Большая уборка квартиры",
-            steps: ["Пропылесосить все комнаты", "Влажная уборка пола", "Смена постельного белья", "Полить цветы"],
-            points: 40
-          },
-          {
-            id: "rt-4",
-            sphere: "Работа",
-            freq: "Раз в неделю",
-            title: "Еженедельное ревью и план",
-            steps: ["Разобрать входящие в почте и заметках", "Подвести итоги недели", "Распределить квесты на следующую неделю"],
-            points: 25
-          },
-          {
-            id: "rt-5",
-            sphere: "Быт",
-            freq: "Раз в 2 недели",
-            title: "Ревизия холодильника и запасов",
-            steps: ["Проверить сроки годности", "Протереть полки", "Составить список базовых покупок"],
-            points: 20
-          },
-          {
-            id: "rt-6",
-            sphere: "Проекты",
-            freq: "Раз в месяц",
-            title: "Финансовый учет и закрытие месяца",
-            steps: ["Свести доходы и расходы", "Отложить процент в накопления", "Проверить подписки"],
-            points: 35
-          },
-          {
-            id: "rt-7",
-            sphere: "Тело",
-            freq: "Отдельные дела",
-            title: "Записаться на чекап / к стоматологу",
-            steps: ["Выбрать клинику и время", "Позвонить или записаться онлайн"],
-            points: 30
-          }
-        ],
-        sideQuests: [
-          {
-            id: "sq-1",
-            tags: ["дом", "вкусное"],
-            title: "Сделать домашний лимонад с мятой и имбирем",
-            time: "0.5ч",
-            cost: "3,50 €",
-            cond: "Лимоны, свежая мята, лед, газированная вода",
-            points: 20,
-            status: "Доступен"
-          },
-          {
-            id: "sq-2",
-            tags: ["природа"],
-            title: "Прогулка в лесу или парке без телефона",
-            time: "2ч",
-            cost: "0 €",
-            cond: "Хорошая погода, термос с чаем",
-            points: 35,
-            status: "Доступен"
-          },
-          {
-            id: "sq-3",
-            tags: ["социальное", "вкусное"],
-            title: "Выбрать новую кофейню и попробовать фильтр-кофе",
-            time: "1.5ч",
-            cost: "6,00 €",
-            cond: "Свободное утро или полдень",
-            points: 25,
-            status: "В процессе"
-          },
-          {
-            id: "sq-4",
-            tags: ["дом", "творчество"],
-            title: "Вечер настольных игр или сборки лего",
-            time: "2.5ч",
-            cost: "0 €",
-            cond: "Пригласить друзей или включить фоновый плейлист",
-            points: 30,
-            status: "Доступен"
-          }
-        ],
-        rewards: [
-          { id: "rw-1", category: "Впечатления", title: "Поход в СПА / массаж (60 минут)", money: "35,00 €", cost: 150 },
-          { id: "rw-2", category: "Удовольствия", title: "Заказ любимых роллов или пиццы", money: "18,00 €", cost: 80 },
-          { id: "rw-3", category: "Покупки", title: "Новая книга или видеоигра из вишлиста", money: "25,00 €", cost: 120 },
-          { id: "rw-4", category: "Отдых", title: "День полного безделья без чувства вины", money: "0 €", cost: 100 }
-        ],
+        weekTasks: {},
+        routines: [],
+        sideQuests: [],
+        rewards: [],
         purchases: []
       };
     }
@@ -2220,6 +2181,99 @@
     if (!savedState || !savedState.uiPreferencesMigrated) {
       state.theme = "dark";
       state.uiPreferencesMigrated = true;
+    }
+
+    function removeUnmodifiedBundledExamples() {
+      const routineSeeds = [
+        { id: "rt-1", sphere: "Тело", freq: "Каждый день", title: "Утренний ритуал бодрости", steps: ["Выпить стакан теплой воды", "Суставная разминка 7 мин", "Контрастный душ"], points: 15 },
+        { id: "rt-2", sphere: "Быт", freq: "Каждый день", title: "Вечерний ресет кухни", steps: ["Загрузить посудомойку", "Протереть стол и плиту", "Вынести мусор"], points: 15 },
+        { id: "rt-3", sphere: "Быт", freq: "Раз в неделю", title: "Большая уборка квартиры", steps: ["Пропылесосить все комнаты", "Влажная уборка пола", "Смена постельного белья", "Полить цветы"], points: 40 },
+        { id: "rt-4", sphere: "Работа", freq: "Раз в неделю", title: "Еженедельное ревью и план", steps: ["Разобрать входящие в почте и заметках", "Подвести итоги недели", "Распределить квесты на следующую неделю"], points: 25 },
+        { id: "rt-5", sphere: "Быт", freq: "Раз в 2 недели", title: "Ревизия холодильника и запасов", steps: ["Проверить сроки годности", "Протереть полки", "Составить список базовых покупок"], points: 20 },
+        { id: "rt-6", sphere: "Проекты", freq: "Раз в месяц", title: "Финансовый учет и закрытие месяца", steps: ["Свести доходы и расходы", "Отложить процент в накопления", "Проверить подписки"], points: 35 },
+        { id: "rt-7", sphere: "Тело", freq: "Отдельные дела", title: "Записаться на чекап / к стоматологу", steps: ["Выбрать клинику и время", "Позвонить или записаться онлайн"], points: 30 }
+      ];
+      const sideQuestSeeds = [
+        { id: "sq-1", tags: ["дом", "вкусное"], title: "Сделать домашний лимонад с мятой и имбирем", time: "0.5ч", cost: "3,50 €", cond: "Лимоны, свежая мята, лед, газированная вода", points: 20, status: "Доступен" },
+        { id: "sq-2", tags: ["природа"], title: "Прогулка в лесу или парке без телефона", time: "2ч", cost: "0 €", cond: "Хорошая погода, термос с чаем", points: 35, status: "Доступен" },
+        { id: "sq-3", tags: ["социальное", "вкусное"], title: "Выбрать новую кофейню и попробовать фильтр-кофе", time: "1.5ч", cost: "6,00 €", cond: "Свободное утро или полдень", points: 25, status: "В процессе" },
+        { id: "sq-4", tags: ["дом", "творчество"], title: "Вечер настольных игр или сборки лего", time: "2.5ч", cost: "0 €", cond: "Пригласить друзей или включить фоновый плейлист", points: 30, status: "Доступен" }
+      ];
+      const rewardSeeds = [
+        { id: "rw-1", category: "Впечатления", title: "Поход в СПА / массаж (60 минут)", money: "35,00 €", cost: 150 },
+        { id: "rw-2", category: "Удовольствия", title: "Заказ любимых роллов или пиццы", money: "18,00 €", cost: 80 },
+        { id: "rw-3", category: "Покупки", title: "Новая книга или видеоигра из вишлиста", money: "25,00 €", cost: 120 },
+        { id: "rw-4", category: "Отдых", title: "День полного безделья без чувства вины", money: "0 €", cost: 100 }
+      ];
+      const matchesSeed = (record, seed) => {
+        const keys = Object.keys(seed);
+        return Object.keys(record).length === keys.length &&
+          keys.every(key => JSON.stringify(record[key]) === JSON.stringify(seed[key]));
+      };
+      const linkedRoutines = new Set();
+      Object.values(state.weekTasks).forEach(tasks => {
+        if (!Array.isArray(tasks)) return;
+        tasks.forEach(task => {
+          routineSeeds.forEach(routine => {
+            if (task.routineId === routine.id ||
+              (!task.routineId && task.category === routine.sphere && task.title === routine.title)) {
+              linkedRoutines.add(routine.id);
+            }
+          });
+        });
+      });
+
+      const originalRoutineCount = state.routines.length;
+      state.routines = state.routines.filter(routine => {
+        const seed = routineSeeds.find(item => item.id === routine.id);
+        return !seed || linkedRoutines.has(routine.id) || !matchesSeed(routine, seed);
+      });
+      const originalSideQuestCount = state.sideQuests.length;
+      state.sideQuests = state.sideQuests.filter(quest => {
+        const seed = sideQuestSeeds.find(item => item.id === quest.id);
+        return !seed || !matchesSeed(quest, seed);
+      });
+      const originalRewardCount = state.rewards.length;
+      state.rewards = state.rewards.filter(reward => {
+        const seed = rewardSeeds.find(item => item.id === reward.id);
+        const wasPurchased = state.purchases.some(purchase =>
+          purchase.title === reward.title && purchase.category === reward.category
+        );
+        return !seed || !matchesSeed(reward, seed) || wasPurchased;
+      });
+      if (!state.rewards.some(reward => reward.id === state.activeGoalId)) {
+        state.activeGoalId = null;
+      }
+
+      return state.routines.length !== originalRoutineCount ||
+        state.sideQuests.length !== originalSideQuestCount ||
+        state.rewards.length !== originalRewardCount;
+    }
+
+    if (removeUnmodifiedBundledExamples()) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function linkLegacyRoutineTasks() {
+      let linked = false;
+      Object.values(state.weekTasks).forEach(tasks => {
+        if (!Array.isArray(tasks)) return;
+        tasks.forEach(task => {
+          if (task.routineId) return;
+          const matches = state.routines.filter(routine =>
+            routine.sphere === task.category && routine.title === task.title
+          );
+          if (matches.length === 1) {
+            task.routineId = matches[0].id;
+            linked = true;
+          }
+        });
+      });
+      return linked;
+    }
+
+    if (linkLegacyRoutineTasks()) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
     function migrateCurrencyLabels() {
@@ -2328,13 +2382,16 @@
           if (!remoteState || typeof remoteState !== "object") {
             throw new Error("В Firebase найден документ с некорректными данными приложения.");
           }
-          const needsStateUpgrade = !remoteState.uiPreferencesMigrated ||
-            !Array.isArray(remoteState.purchases);
           state = { ...getDefaultState(), ...remoteState };
           if (!remoteState.uiPreferencesMigrated) {
             state.theme = "dark";
             state.uiPreferencesMigrated = true;
           }
+          const bundledExamplesRemoved = removeUnmodifiedBundledExamples();
+          const routineTasksLinked = linkLegacyRoutineTasks();
+          const needsStateUpgrade = !remoteState.uiPreferencesMigrated ||
+            !Array.isArray(remoteState.purchases) || routineTasksLinked ||
+            bundledExamplesRemoved;
           const currencyMigrated = migrateCurrencyLabels();
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           renderAll();
@@ -2736,7 +2793,9 @@
       }
       saveState();
       renderWeek();
+      renderRoutines();
       renderShop();
+      renderYearlyStats();
     }
 
     function escapeHTML(value) {
@@ -2857,7 +2916,9 @@
       state.weekTasks[iso] = state.weekTasks[iso].filter(t => t.id !== taskId);
       saveState();
       renderWeek();
+      renderRoutines();
       renderShop();
+      renderYearlyStats();
     }
 
     function moveWeekTask(sourceIso, taskId, targetIso) {
@@ -2874,6 +2935,7 @@
 
       saveState();
       renderWeek();
+      renderRoutines();
       renderShop();
       renderYearlyStats();
     }
@@ -2881,11 +2943,13 @@
     function changeWeek(delta) {
       currentWeekOffset += delta;
       renderWeek();
+      renderRoutines();
     }
 
     function resetToCurrentWeek() {
       currentWeekOffset = 0;
       renderWeek();
+      renderRoutines();
     }
 
     // ВКЛАДКА 2: ПОВТОРЫ (РУТИНЫ)
@@ -2897,54 +2961,221 @@
           onclick="setSphereFilter('${sp}')">${sp}</button>
       `).join("");
 
-      // Опции выбора дня текущей недели для копирования
       const monday = getMondayOfCurrentWeek(currentWeekOffset);
+      const weekDates = Array.from({ length: 7 }, (_, index) =>
+        toISODate(new Date(monday.getTime() + index * 86400000))
+      );
       const shortDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
       const todayISO = toISODate(new Date());
       let daySelectOptions = "";
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(monday.getTime() + i * 86400000);
-        const iso = toISODate(d);
-        daySelectOptions += `<option value="${iso}" ${iso === todayISO ? "selected" : ""}>${shortDays[i]} (${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')})</option>`;
+      weekDates.forEach((iso, index) => {
+        const date = new Date(`${iso}T12:00:00`);
+        daySelectOptions += `<option value="${iso}" ${iso === todayISO ? "selected" : ""}>${shortDays[index]} (${date.getDate()}.${String(date.getMonth() + 1).padStart(2, "0")})</option>`;
+      });
+      const defaultPlanDay = weekDates.includes(todayISO) ? todayISO : weekDates[0];
+
+      const getWeekStats = routine => {
+        const scheduled = new Set();
+        const completed = new Set();
+        weekDates.forEach(iso => {
+          (state.weekTasks[iso] || []).forEach(task => {
+            if (task.routineId !== routine.id) return;
+            scheduled.add(iso);
+            if (task.done) completed.add(iso);
+          });
+        });
+        return { scheduled: scheduled.size, completed: completed.size };
+      };
+
+      const getCurrentStreak = routine => {
+        const completedDates = new Set();
+        Object.entries(state.weekTasks).forEach(([iso, tasks]) => {
+          if (!Array.isArray(tasks)) return;
+          if (tasks.some(task => task.routineId === routine.id && task.done)) {
+            completedDates.add(iso);
+          }
+        });
+
+        let currentDate = new Date(`${todayISO}T12:00:00`);
+        if (!completedDates.has(todayISO)) {
+          currentDate.setDate(currentDate.getDate() - 1);
+        }
+
+        let streak = 0;
+        while (completedDates.has(toISODate(currentDate))) {
+          streak += 1;
+          currentDate.setDate(currentDate.getDate() - 1);
+        }
+        return streak;
+      };
+
+      const allRoutineStats = state.routines.map(routine => ({
+        routine,
+        ...getWeekStats(routine)
+      }));
+      const totalScheduled = allRoutineStats.reduce((sum, item) => sum + item.scheduled, 0);
+      const totalCompleted = allRoutineStats.reduce((sum, item) => sum + item.completed, 0);
+      const bestStreak = state.routines
+        .filter(routine => routine.freq === "Каждый день")
+        .reduce((best, routine) => Math.max(best, getCurrentStreak(routine)), 0
+      );
+      document.getElementById("routine-overview").innerHTML = `
+        <div class="routine-overview-card">
+          <div class="routine-overview-value">${state.routines.length}</div>
+          <div class="routine-overview-label">Привычек в списке</div>
+        </div>
+        <div class="routine-overview-card">
+          <div class="routine-overview-value">${totalCompleted} / ${totalScheduled}</div>
+          <div class="routine-overview-label">Выполнено на этой неделе</div>
+        </div>
+        <div class="routine-overview-card">
+          <div class="routine-overview-value">${formatCount(bestStreak, "день", "дня", "дней")} 🔥</div>
+          <div class="routine-overview-label">Текущая серия</div>
+        </div>
+      `;
+
+      const makeRoutineButton = (routine, stats) => {
+        if (routine.freq === "Каждый день") {
+          const fullyScheduled = stats.scheduled === 7;
+        const fullyCompleted = stats.completed === 7;
+        const label = fullyCompleted
+          ? "Неделя выполнена"
+          : fullyScheduled
+            ? "Убрать с недели"
+          : stats.scheduled
+            ? "Дозаполнить неделю"
+            : "Заполнить всю неделю";
+        return `<button class="${fullyScheduled ? "btn-icon" : "btn-primary"}"
+          ${fullyCompleted ? "disabled" : ""}
+          onclick="toggleRoutineWeek('${routine.id}')">${label}</button>`;
       }
+
+      if (routine.freq === "3 раза в неделю") {
+        const days = Array.isArray(routine.daysOfWeek) ? routine.daysOfWeek : [];
+        const chosenDates = weekDates.filter((_, index) => days.includes(index));
+        const scheduledDates = new Set();
+        const completedDates = new Set();
+        chosenDates.forEach(iso => {
+          (state.weekTasks[iso] || []).forEach(task => {
+            if (task.routineId !== routine.id) return;
+            scheduledDates.add(iso);
+            if (task.done) completedDates.add(iso);
+          });
+        });
+        const isFullyScheduled = chosenDates.length === 3 &&
+          scheduledDates.size === 3;
+        const isFullyCompleted = isFullyScheduled && completedDates.size === 3;
+        const label = isFullyCompleted
+          ? "3 дня выполнены"
+          : isFullyScheduled
+            ? "Убрать с недели"
+            : scheduledDates.size
+              ? "Дозапланировать дни"
+              : "Запланировать 3 дня";
+        return `
+          <div class="routine-days" aria-label="Выберите три дня недели">
+            ${["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day, index) => `
+              <button type="button" class="routine-day-btn ${days.includes(index) ? "selected" : ""}"
+                aria-pressed="${days.includes(index)}"
+                aria-label="${["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"][index]}"
+                onclick="toggleRoutineWeekday('${routine.id}', ${index})"
+                ${days.length >= 3 && !days.includes(index) ? "disabled" : ""}>${day}</button>
+            `).join("")}
+          </div>
+          <button class="${isFullyScheduled ? "btn-icon" : "btn-primary"}"
+            ${days.length !== 3 || isFullyCompleted ? "disabled" : ""}
+            onclick="toggleRoutineThreeDays('${routine.id}')">${label}</button>
+        `;
+      }
+
+        const selectedDateTasks = (state.weekTasks[defaultPlanDay] || [])
+          .filter(task => task.routineId === routine.id);
+        const completedToday = selectedDateTasks.some(task => task.done);
+        const scheduledToday = selectedDateTasks.length > 0;
+        const label = completedToday
+          ? "Уже выполнено"
+          : scheduledToday
+            ? "Убрать из плана"
+            : "В план недели";
+        const disabled = completedToday ? "disabled" : "";
+        return `
+          <select id="plan-day-${routine.id}" class="select-sm" aria-label="День для привычки"
+            onchange="updateRoutineDayButton('${routine.id}')">
+            ${daySelectOptions}
+          </select>
+          <button id="plan-action-${routine.id}" class="${scheduledToday ? "btn-icon" : "btn-primary"}" ${disabled}
+            onclick="toggleRoutineDay('${routine.id}')">${label}</button>
+        `;
+      };
 
       const container = document.getElementById("routines-container");
       container.innerHTML = "";
+      const visibleRoutines = state.routines.filter(routine =>
+        activeSphereFilter === "Все" || routine.sphere === activeSphereFilter
+      );
+      if (!visibleRoutines.length) {
+        container.innerHTML = `
+          <div class="routine-empty">
+            ${state.routines.length
+              ? "В этой сфере пока нет привычек."
+              : "Добавьте привычку, чтобы запланировать её и следить за серией."}
+          </div>
+        `;
+        return;
+      }
 
       FREQUENCIES.forEach(freq => {
-        const filtered = state.routines.filter(r =>
+        const filtered = visibleRoutines.filter(r =>
           r.freq === freq && (activeSphereFilter === "Все" || r.sphere === activeSphereFilter)
         );
+        if (!filtered.length) return;
 
         const col = document.createElement("div");
         col.className = "freq-col";
 
-        const cardsHTML = filtered.map(rt => `
+        const cardsHTML = filtered.map(routine => {
+          const stats = getWeekStats(routine);
+          const streak = getCurrentStreak(routine);
+          const progress = routine.freq === "Каждый день"
+            ? `${stats.completed}/7 выполнено`
+                : routine.freq === "3 раза в неделю"
+                  ? `${stats.completed}/3 выполнено`
+                  : `${stats.completed}/${stats.scheduled} выполнено`;
+          return `
           <div class="routine-card">
             <div class="routine-top">
               <div>
-                <span class="cat-badge cat-${rt.sphere}">${rt.sphere}</span>
-                <div class="routine-title" style="margin-top:0.3rem;">${rt.title}</div>
+                <span class="cat-badge cat-${routine.sphere}">${routine.sphere}</span>
+                <div class="routine-title" style="margin-top:0.3rem;">${escapeHTML(routine.title)}</div>
               </div>
               <div style="display:flex; align-items:center; gap:0.3rem;">
-                <span class="pts-badge">+${formatPoints(rt.points)}</span>
-                <button class="btn-del-mini" onclick="deleteRoutine('${rt.id}')">&times;</button>
+                <div class="routine-points-control">
+                  <button type="button" class="pts-badge task-points-btn"
+                    onclick="editRoutinePoints('${routine.id}')"
+                    title="Изменить баллы за привычку"
+                    aria-label="Изменить баллы за привычку «${escapeHTML(routine.title)}»">+${formatPoints(routine.points)}</button>
+                </div>
+                <button class="btn-del-mini" onclick="deleteRoutine('${routine.id}')" aria-label="Удалить привычку">&times;</button>
               </div>
             </div>
-            ${rt.steps && rt.steps.length ? `
+            <div class="routine-progress">
+              <span>На неделе: ${progress}</span>
+              ${routine.freq === "Каждый день" ? `<span>🔥 Серия: ${formatCount(streak, "день", "дня", "дней")}</span>` : ""}
+            </div>
+            ${routine.steps && routine.steps.length ? `
               <details class="checklist-details">
-                <summary>Чек-лист шагов (${rt.steps.length})</summary>
+                <summary>Шаги (${routine.steps.length})</summary>
                 <ul class="checklist-ul">
-                  ${rt.steps.map(s => `<li>${s}</li>`).join("")}
+                  ${routine.steps.map(step => `<li>${escapeHTML(step)}</li>`).join("")}
                 </ul>
               </details>
             ` : ""}
             <div class="routine-actions">
-              <select id="plan-day-${rt.id}" class="select-sm" style="flex:1;">${daySelectOptions}</select>
-              <button class="btn-primary" onclick="takeRoutineToWeek('${rt.id}', event)">В план недели</button>
+              ${makeRoutineButton(routine, stats)}
             </div>
           </div>
-        `).join("");
+        `;
+        }).join("");
 
         col.innerHTML = `
           <div class="freq-header">
@@ -2990,14 +3221,16 @@
       if (!title) return;
       const steps = stepsRaw ? stepsRaw.split("\n").map(s => s.trim()).filter(Boolean) : [];
 
-      state.routines.push({
+      const routine = {
         id: "rt-" + Date.now(),
         sphere,
         freq,
         title,
         steps,
         points
-      });
+      };
+      if (freq === "3 раза в неделю") routine.daysOfWeek = [];
+      state.routines.push(routine);
 
       document.getElementById("rt-title").value = "";
       document.getElementById("rt-steps").value = "";
@@ -3006,35 +3239,217 @@
       renderRoutines();
     }
 
+    function editRoutinePoints(routineId) {
+      const routine = state.routines.find(item => item.id === routineId);
+      if (!routine) return;
+      const routineCard = [...document.querySelectorAll(".routine-card")]
+        .find(element => element.querySelector(`[onclick="editRoutinePoints('${routineId}')"]`));
+      const pointsControl = routineCard?.querySelector(".routine-points-control");
+      if (!pointsControl) return;
+
+      pointsControl.innerHTML = `
+        <form class="task-points-edit" onsubmit="saveRoutinePoints(event, '${routineId}')">
+          <input type="number" class="input-sm" name="points" value="${Number(routine.points) || 0}"
+            min="0" max="9007199254740991" step="1" required
+            aria-label="Баллы за привычку" title="Введите целое число от 0 и выше" />
+          <button type="submit" class="task-points-save" aria-label="Сохранить баллы" title="Сохранить">✓</button>
+          <button type="button" onclick="renderRoutines()" aria-label="Отменить изменение" title="Отменить">×</button>
+        </form>
+      `;
+      const input = pointsControl.querySelector('input[name="points"]');
+      input?.focus();
+      input?.select();
+    }
+
+    function saveRoutinePoints(event, routineId) {
+      event.preventDefault();
+      const routine = state.routines.find(item => item.id === routineId);
+      const input = event.currentTarget.querySelector('input[name="points"]');
+      if (!routine || !input || !input.reportValidity()) return;
+
+      const points = input.valueAsNumber;
+      if (!Number.isSafeInteger(points) || points < 0) return;
+      routine.points = points;
+      Object.values(state.weekTasks).forEach(tasks => {
+        if (!Array.isArray(tasks)) return;
+        tasks.forEach(task => {
+          if (task.routineId === routineId && !task.done) task.points = points;
+        });
+      });
+
+      saveState();
+      renderWeek();
+      renderRoutines();
+      renderShop();
+      renderYearlyStats();
+    }
+
     function deleteRoutine(id) {
       state.routines = state.routines.filter(r => r.id !== id);
       saveState();
       renderRoutines();
     }
 
-    function takeRoutineToWeek(rtId, event) {
-      const rt = state.routines.find(r => r.id === rtId);
-      if (!rt) return;
-      const targetIso = document.getElementById(`plan-day-${rtId}`).value;
-      if (!state.weekTasks[targetIso]) state.weekTasks[targetIso] = [];
+    function toggleRoutineDay(routineId) {
+      const routine = state.routines.find(item => item.id === routineId);
+      const select = document.getElementById(`plan-day-${routineId}`);
+      if (!routine || !select) return;
+      const targetIso = select.value;
+      if (!targetIso) return;
+      const tasks = state.weekTasks[targetIso] || [];
+      const routineTasks = tasks.filter(task => task.routineId === routine.id);
+      if (routineTasks.some(task => task.done)) return;
 
-      state.weekTasks[targetIso].push({
-        id: "t-" + Date.now(),
-        category: rt.sphere,
-        title: rt.title,
-        points: rt.points,
-        done: false
+      if (routineTasks.length) {
+        state.weekTasks[targetIso] = tasks.filter(task =>
+          task.routineId !== routine.id || task.done
+        );
+        if (!state.weekTasks[targetIso].length) delete state.weekTasks[targetIso];
+      } else {
+        addRoutineTask(routine, targetIso);
+      }
+      saveState();
+      renderWeek();
+      renderRoutines();
+      renderShop();
+      renderYearlyStats();
+    }
+
+    function updateRoutineDayButton(routineId) {
+      const routine = state.routines.find(item => item.id === routineId);
+      const select = document.getElementById(`plan-day-${routineId}`);
+      const button = document.getElementById(`plan-action-${routineId}`);
+      if (!routine || !select || !button) return;
+
+      const tasks = (state.weekTasks[select.value] || [])
+        .filter(task => task.routineId === routineId);
+      const completed = tasks.some(task => task.done);
+      const scheduled = tasks.length > 0;
+      button.textContent = completed
+        ? "Уже выполнено"
+        : scheduled
+          ? "Убрать из плана"
+          : "В план недели";
+      button.disabled = completed;
+      button.className = scheduled ? "btn-icon" : "btn-primary";
+    }
+
+    function addRoutineTask(routine, iso, dayIndex = 0) {
+      if (!state.weekTasks[iso]) state.weekTasks[iso] = [];
+      state.weekTasks[iso].push({
+        id: `t-${Date.now()}-${dayIndex}-${Math.random().toString(36).slice(2, 7)}`,
+        category: routine.sphere,
+        title: routine.title,
+        points: routine.points,
+        done: false,
+        routineId: routine.id
+      });
+    }
+
+    function toggleRoutineWeek(routineId) {
+      const routine = state.routines.find(item => item.id === routineId);
+      if (!routine || routine.freq !== "Каждый день") return;
+
+      const monday = getMondayOfCurrentWeek(currentWeekOffset);
+      const weekDates = Array.from({ length: 7 }, (_, index) =>
+        toISODate(new Date(monday.getTime() + index * 86400000))
+      );
+      const scheduledDates = new Set();
+      weekDates.forEach(iso => {
+        if ((state.weekTasks[iso] || []).some(task => task.routineId === routine.id)) {
+          scheduledDates.add(iso);
+        }
       });
 
+      if (scheduledDates.size === 7) {
+        weekDates.forEach(iso => {
+          const tasks = state.weekTasks[iso] || [];
+          state.weekTasks[iso] = tasks.filter(task =>
+            task.routineId !== routine.id || task.done
+          );
+          if (!state.weekTasks[iso].length) delete state.weekTasks[iso];
+        });
+      } else {
+        weekDates.forEach((iso, index) => {
+          if (!scheduledDates.has(iso)) addRoutineTask(routine, iso, index);
+        });
+      }
+
       saveState();
-      const btn = event.target;
-      const oldText = btn.textContent;
-      btn.textContent = "✓ Добавлено!";
-      btn.style.background = "var(--success)";
-      setTimeout(() => {
-        btn.textContent = oldText;
-        btn.style.background = "";
-      }, 1000);
+      renderWeek();
+      renderRoutines();
+      renderShop();
+      renderYearlyStats();
+    }
+
+    function toggleRoutineWeekday(routineId, dayIndex) {
+      const routine = state.routines.find(item => item.id === routineId);
+      if (!routine || routine.freq !== "3 раза в неделю" ||
+        !Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return;
+      const days = Array.isArray(routine.daysOfWeek) ? [...routine.daysOfWeek] : [];
+      const existingIndex = days.indexOf(dayIndex);
+      let scheduleChanged = false;
+      if (existingIndex >= 0) {
+        days.splice(existingIndex, 1);
+        const monday = getMondayOfCurrentWeek(currentWeekOffset);
+        const iso = toISODate(new Date(monday.getTime() + dayIndex * 86400000));
+        const tasks = state.weekTasks[iso] || [];
+        state.weekTasks[iso] = tasks.filter(task =>
+          task.routineId !== routineId || task.done
+        );
+        if (!state.weekTasks[iso].length) delete state.weekTasks[iso];
+        scheduleChanged = tasks.some(task => task.routineId === routineId && !task.done);
+      } else if (days.length < 3) {
+        days.push(dayIndex);
+      } else {
+        return;
+      }
+
+      routine.daysOfWeek = days.sort((a, b) => a - b);
+      saveState();
+      if (scheduleChanged) {
+        renderWeek();
+        renderShop();
+        renderYearlyStats();
+      }
+      renderRoutines();
+    }
+
+    function toggleRoutineThreeDays(routineId) {
+      const routine = state.routines.find(item => item.id === routineId);
+      if (!routine || routine.freq !== "3 раза в неделю" ||
+        !Array.isArray(routine.daysOfWeek) || routine.daysOfWeek.length !== 3) return;
+
+      const monday = getMondayOfCurrentWeek(currentWeekOffset);
+      const dates = routine.daysOfWeek.map(day =>
+        toISODate(new Date(monday.getTime() + day * 86400000))
+      );
+      const scheduledDates = dates.filter(iso =>
+        (state.weekTasks[iso] || []).some(task => task.routineId === routine.id)
+      );
+      const fullyScheduled = scheduledDates.length === 3;
+
+      if (fullyScheduled) {
+        dates.forEach(iso => {
+          const tasks = state.weekTasks[iso] || [];
+          state.weekTasks[iso] = tasks.filter(task =>
+            task.routineId !== routine.id || task.done
+          );
+          if (!state.weekTasks[iso].length) delete state.weekTasks[iso];
+        });
+      } else {
+        dates.forEach((iso, index) => {
+          if (!(state.weekTasks[iso] || []).some(task => task.routineId === routine.id)) {
+            addRoutineTask(routine, iso, index);
+          }
+        });
+      }
+
+      saveState();
+      renderWeek();
+      renderRoutines();
+      renderShop();
+      renderYearlyStats();
     }
 
     // ВКЛАДКА 3: ПОБОЧНЫЕ КВЕСТЫ
